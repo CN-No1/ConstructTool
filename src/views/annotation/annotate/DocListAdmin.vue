@@ -61,7 +61,7 @@
               </el-tooltip>
             </template>
           </el-table-column>
-          <!-- <el-table-column label="操作" class="icons" align="center">
+          <el-table-column label="操作" class="icons" align="center">
             <template slot-scope="scope">
               <el-tooltip
                 class="item"
@@ -75,7 +75,7 @@
                 </span>
               </el-tooltip>
             </template>
-          </el-table-column> -->
+          </el-table-column>
         </el-table>
         <div class="pagenation">
           <el-pagination
