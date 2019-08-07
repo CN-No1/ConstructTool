@@ -7,12 +7,12 @@
       <el-popover ref="popover" placement="bottom" width="160" trigger="manual" v-model="visible">
         <el-input ref="newNode" v-model="newNode"></el-input>
         <div style="text-align: right; margin: 0;padding-top:5px;">
-          <el-button size="mini" type="danger" @click="addTopNode(false)">取消</el-button>
-          <el-button type="primary" size="mini" @click="addTopNode(true)">确定</el-button>
+          <el-button size="mini" type="danger" @click="closePop">取消</el-button>
+          <el-button type="primary" size="mini" @click="addTopNode">确定</el-button>
         </div>
         <el-button slot="reference" @click.stop="showPop" type="primary">新增顶层节点</el-button>
       </el-popover>
-      <el-button v-if="moduleId!=''" type="success" @click="save">保存</el-button>
+      <el-button type="success" @click="save">保存</el-button>
     </div>
     <el-row>
       <el-col :span="8" v-loading="loading">
@@ -44,7 +44,7 @@
           </span>
         </el-tree>
       </el-col>
-      <el-col :span="16" v-show="formVisable" class="node-form">
+      <el-col :span="16" v-show="formVisiable" class="node-form">
         <div class="node-name">
           <span>节点名称:</span>
           <el-input
@@ -102,10 +102,11 @@ import ObjectPropModel, {
 import { getUUID } from "@/util/uuid";
 import EntityAPIImpl from "@/api/impl/EntityAPIImpl";
 import { FlatToNested } from "@/util/tranformTreeData";
+import EntityFormMixin from "../../mixin/EntityFormMixin";
 
 @Component({ components: { Treeselect } })
 export default class ObjectProp extends Vue {
-  private formVisable: boolean = false;
+  private formVisiable: boolean = false;
   private objectProp: ObjectPropModel = new ObjectPropModel();
   private entityList: any[] = []; // 实体类树
   private node: ObjectPropNode = { label: "", relation: [] }; // 被选中的节点
@@ -115,7 +116,7 @@ export default class ObjectProp extends Vue {
   private doneEdit: boolean = false; // 页面是否有修改
   private entityAPI = new EntityAPIImpl();
   private loading: boolean = true;
-  private visible: boolean = false;
+  private visible: boolean = false; // prop是否出现
   private newNode: string = "";
   private myThis: any = this;
 
@@ -163,7 +164,7 @@ export default class ObjectProp extends Vue {
   private handleClick(data: ObjectPropNode) {
     // 点击树节点
     this.node = data;
-    this.formVisable = true;
+    this.formVisiable = true;
     const input = this.$refs.nodeName as any;
     input.focus();
   }
@@ -184,7 +185,7 @@ export default class ObjectProp extends Vue {
       this.$set(data, "children", []);
     }
     data.children.unshift(newChild);
-    this.formVisable = true;
+    this.formVisiable = true;
     this.node = newChild;
     const input = this.$refs.nodeName as any;
     input.focus();
@@ -200,17 +201,18 @@ export default class ObjectProp extends Vue {
       });
       return;
     }
-    this.myThis.$confirm("确认删除吗?", "提示", {
-      confirmButtonText: "确定",
-      cancelButtonText: "取消",
-      type: "warning"
-    })
+    this.myThis
+      .$confirm("确认删除吗?", "提示", {
+        confirmButtonText: "确定",
+        cancelButtonText: "取消",
+        type: "warning"
+      })
       .then(() => {
         const parent = node.parent;
         const children = parent.data.children || parent.data;
         const index = children.findIndex((d: any) => d.id === data.id);
         children.splice(index, 1);
-        this.formVisable = false;
+        this.formVisiable = false;
         this.myThis.$message({
           type: "success",
           message: "删除成功!"
@@ -224,7 +226,6 @@ export default class ObjectProp extends Vue {
         });
       });
   }
-
   private showPop() {
     this.visible = true;
     const input = this.$refs.newNode as any;
@@ -236,17 +237,15 @@ export default class ObjectProp extends Vue {
     this.newNode = "";
   }
 
-  private addTopNode(val: boolean) {
+  private addTopNode() {
     // 新增顶层节点
-    if (val) {
-      const node: ObjectPropNode = {
-        id: getUUID(),
-        label: this.newNode,
-        relation: []
-      };
-      this.objectProp.objectPropList.unshift(node);
-      this.doneEdit = true;
-    }
+    const node: ObjectPropNode = {
+      id: getUUID(),
+      label: this.newNode,
+      relation: []
+    };
+    this.objectProp.objectPropList.unshift(node);
+    this.doneEdit = true;
     this.visible = false;
     this.newNode = "";
   }
@@ -271,10 +270,10 @@ export default class ObjectProp extends Vue {
   private save() {
     // 保存关系属性树
     this.loading = true;
-    this.entityAPI.creatOrUpdateObjectProp(this.objectProp).then((data) => {
+    this.entityAPI.creatOrUpdateObjectProp(this.objectProp).then(({ data }) => {
       this.loading = false;
       this.doneEdit = false;
-      this.formVisable = false;
+      this.formVisiable = false;
       this.myThis.$message({
         type: "success",
         message: "保存成功!"
@@ -286,15 +285,16 @@ export default class ObjectProp extends Vue {
   private beforeRouteLeave(to: any, from: any, next: () => void) {
     // 离开页面前保存
     if (this.doneEdit) {
-      this.myThis.$confirm(
-        "检测到未保存的内容，是否在离开页面前保存修改？",
-        "确认信息",
-        {
-          distinguishCancelAndClose: true,
-          confirmButtonText: "保存",
-          cancelButtonText: "放弃修改"
-        }
-      )
+      this.myThis
+        .$confirm(
+          "检测到未保存的内容，是否在离开页面前保存修改？",
+          "确认信息",
+          {
+            distinguishCancelAndClose: true,
+            confirmButtonText: "保存",
+            cancelButtonText: "放弃修改"
+          }
+        )
         .then(() => {
           this.save();
           next();

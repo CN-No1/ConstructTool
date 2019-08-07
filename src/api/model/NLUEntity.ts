@@ -3,6 +3,7 @@ class NLUEntity {
     public moduleId?: string;
     public status?: string;
     public content?: string;
+    public hashCode?: number;
     public annotationList!: Annotation[];
 }
 

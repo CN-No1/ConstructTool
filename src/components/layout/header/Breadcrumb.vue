@@ -16,7 +16,7 @@ export default class Breadcrumb extends Vue {
   private router(newVal: object, oldVal: object) {
     // 实现路由导航
     this.menuList = [];
-    this.$route.matched.map((item) => {
+    this.$route.matched.forEach((item) => {
       if (item.name !== "home") {
         this.menuList.push(item.meta.menuName);
       }

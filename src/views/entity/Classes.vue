@@ -7,12 +7,12 @@
       <el-popover ref="popover" placement="bottom" width="160" trigger="manual" v-model="visible">
         <el-input ref="newNode" v-model="newNode"></el-input>
         <div style="text-align: right; margin: 0;padding-top:5px;">
-          <el-button size="mini" type="danger" @click="addTopNode(false)">取消</el-button>
-          <el-button type="primary" size="mini" @click="addTopNode(true)">确定</el-button>
+          <el-button size="mini" type="danger" @click="closePop">取消</el-button>
+          <el-button type="primary" size="mini" @click="addTopNode">确定</el-button>
         </div>
         <el-button slot="reference" @click.stop="showPop" type="primary">新增顶层节点</el-button>
       </el-popover>
-      <el-button v-if="moduleId!=''" type="success" @click="save">保存</el-button>
+      <el-button type="success" @click="save">保存</el-button>
     </div>
     <el-row>
       <el-col :span="8" v-loading="loading">
@@ -46,7 +46,7 @@
           </span>
         </el-tree>
       </el-col>
-      <el-col :span="16" v-show="formVisable" class="node-form">
+      <el-col :span="16" v-show="formVisiable" class="node-form">
         <div class="node-name">
           <span>节点名称:</span>
           <el-input
@@ -81,7 +81,7 @@ import { NestedToFlat, FlatToNested } from "@/util/tranformTreeData";
 
 @Component({})
 export default class Entity extends Vue {
-  private formVisable: boolean = false;
+  private formVisiable: boolean = false;
   private entityClass: EntityClassNode[] = [];
   private node: EntityClassNode = { label: "", description: "" }; // 节点临时对象，用于动态修改树节点展示
   private moduleId: string = "5d2fe2f28eb1330dcc8f46bd"; // 选中moduleId
@@ -124,7 +124,7 @@ export default class Entity extends Vue {
   private handleClick(data: any) {
     // 点击节点编辑
     this.node = data;
-    this.formVisable = true;
+    this.formVisiable = true;
     const input = this.$refs.nodeName as any;
     input.focus();
   }
@@ -159,7 +159,7 @@ export default class Entity extends Vue {
       this.$set(data, "children", []);
     }
     data.children.unshift(newChild);
-    this.formVisable = true;
+    this.formVisiable = true;
     this.node = newChild;
     const input = this.$refs.nodeName as any;
     input.focus();
@@ -187,7 +187,7 @@ export default class Entity extends Vue {
         const children = parent.data.children || parent.data;
         const index = children.findIndex((d: any) => d.id === data.id);
         children.splice(index, 1);
-        this.formVisable = false;
+        this.formVisiable = false;
         this.myThis.$message({
           type: "success",
           message: "删除成功!"
@@ -213,18 +213,16 @@ export default class Entity extends Vue {
     this.newNode = "";
   }
 
-  private addTopNode(val: boolean) {
+  private addTopNode() {
     // 新增顶层节点
-    if (val) {
-      const node: EntityClassNode = {
-        id: getUUID(),
-        label: this.newNode,
-        description: "",
-        bandFlag: "0"
-      };
-      this.entityClass.unshift(node);
-      this.doneEdit = true;
-    }
+    const node: EntityClassNode = {
+      id: getUUID(),
+      label: this.newNode,
+      description: "",
+      bandFlag: "0"
+    };
+    this.entityClass.unshift(node);
+    this.doneEdit = true;
     this.visible = false;
     this.newNode = "";
   }
@@ -236,7 +234,7 @@ export default class Entity extends Vue {
     this.entityAPI.creatOrUpdateClass(flatData).then(({ data }) => {
       this.loading = false;
       this.doneEdit = false;
-      this.formVisable = false;
+      this.formVisiable = false;
       this.myThis.$message({
         type: "success",
         message: "保存成功!"

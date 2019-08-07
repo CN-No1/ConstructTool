@@ -4,8 +4,8 @@
       <el-popover ref="popover" placement="bottom" width="160" trigger="manual" v-model="visible">
         <el-input ref="newNode" v-model="newNode"></el-input>
         <div style="text-align: right; margin: 0;padding-top:5px;">
-          <el-button size="mini" type="danger" @click="addTopNode(false)">取消</el-button>
-          <el-button type="primary" size="mini" @click="addTopNode(true)">确定</el-button>
+          <el-button size="mini" type="danger" @click="closePop">取消</el-button>
+          <el-button type="primary" size="mini" @click="addTopNode">确定</el-button>
         </div>
         <el-button slot="reference" @click.stop="showPop" type="primary">新增顶层节点</el-button>
       </el-popover>
@@ -35,7 +35,7 @@
           </span>
         </el-tree>
       </el-col>
-      <el-col :span="16" v-show="formVisable" class="node-form">
+      <el-col :span="16" v-show="formVisiable" class="node-form">
         <div class="node-name">
           <span>节点名称:</span>
           <el-input
@@ -59,7 +59,7 @@ import EntityAPIImpl from "@/api/impl/EntityAPIImpl";
   components: {}
 })
 export default class DataType extends Vue {
-  private formVisable: boolean = false;
+  private formVisiable: boolean = false;
   private dataTypeTree: DataTypeModel[] = [];
   private node: DataTypeModel = { label: "" };
   private doneEdit: boolean = false; // 页面是否有修改
@@ -87,7 +87,7 @@ export default class DataType extends Vue {
   private handleClick(data: any) {
     // 点击节点
     this.node = data;
-    this.formVisable = true;
+    this.formVisiable = true;
     const input = this.$refs.nodeName as any;
     input.focus();
   }
@@ -103,7 +103,7 @@ export default class DataType extends Vue {
     const children = parent.data.children || parent.data;
     const index = children.findIndex((d: any) => d.id === data.id);
     children.splice(index, 1);
-    this.formVisable = false;
+    this.formVisiable = false;
   }
 
   private getUUID() {
@@ -130,13 +130,11 @@ export default class DataType extends Vue {
     this.newNode = "";
   }
 
-  private addTopNode(val: boolean) {
+  private addTopNode() {
     // 新增顶层节点
-    if (val) {
-      const node = { id: this.getUUID(), label: this.newNode };
-      this.dataTypeTree.unshift(node);
-      this.doneEdit = true;
-    }
+    const node = { id: this.getUUID(), label: this.newNode };
+    this.dataTypeTree.unshift(node);
+    this.doneEdit = true;
     this.visible = false;
     this.newNode = "";
   }
@@ -153,7 +151,7 @@ export default class DataType extends Vue {
     this.entityAPI.creatOrUpdateDataType(this.dataTypeTree).then(({ data }) => {
       this.loading = false;
       this.doneEdit = false;
-      this.formVisable = false;
+      this.formVisiable = false;
       this.myThis.$message({
         type: "success",
         message: "保存成功!"

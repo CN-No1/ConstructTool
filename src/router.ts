@@ -17,26 +17,26 @@ export default new Router({
     {
       path: "/entity",
       name: "entity",
-      meta: { menuName: "实体", iconClass: "&#xe75d;" },
+      meta: { menuName: "图谱", iconClass: "&#xe75d;" },
       component: InnerLayout,
       redirect: "/entity/classes",
       children: [
         {
           path: "classes",
           name: "classes",
-          meta: { menuName: "实体类", iconClass: "" },
+          meta: { menuName: "本体图", iconClass: "" },
           component: () => import("./views/entity/Classes.vue"),
         },
         {
           path: "objectProp",
           name: "objectProp",
-          meta: { menuName: "对象属性", iconClass: "" },
+          meta: { menuName: "事件关系", iconClass: "" },
           component: () => import("./views/entity/ObjectProp.vue"),
         },
         {
           path: "dataProp",
           name: "dataProp",
-          meta: { menuName: "数据属性", iconClass: "" },
+          meta: { menuName: "事件属性", iconClass: "" },
           component: () => import("./views/entity/DataProp.vue"),
         },
         {

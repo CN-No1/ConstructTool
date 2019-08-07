@@ -1,6 +1,6 @@
 <template>
   <div>
-    <h1>This is HomePage</h1>
+    <h1>欢迎使用法律图谱构架工具！</h1>
   </div>
 </template>
 

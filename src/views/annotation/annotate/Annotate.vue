@@ -135,7 +135,7 @@ export default class Annotate extends Vue {
   private addLabel(offset: any) {
     // 添加标注点
     this.doc.annotationList = [];
-    this.entityArr.map((item) => {
+    this.entityArr.forEach((item) => {
       const newLabel: Annotation = {
         startOffset: offset.startOffset,
         endOffset: offset.endOffset,
@@ -155,7 +155,7 @@ export default class Annotate extends Vue {
       (item) => item.value === value
     );
     this.text = value;
-    innerTableData.map((item) => {
+    innerTableData.forEach((item) => {
       const obj = {
         id: item.entityId,
         label: item.value
