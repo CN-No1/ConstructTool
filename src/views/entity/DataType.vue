@@ -1,8 +1,8 @@
 <template>
   <div class="header" @click="closePop">
     <div>
-      <el-popover ref="popover" placement="bottom" width="160" trigger="manual" v-model="visible">
-        <el-input ref="newNode" v-model="newNode"></el-input>
+      <el-popover ref="popover" placement="bottom" width="160" trigger="manual" v-model="propVisible">
+        <el-input ref="newNode" v-model="newNode" @keyup.enter.native="addTopNode"></el-input>
         <div style="text-align: right; margin: 0;padding-top:5px;">
           <el-button size="mini" type="danger" @click="closePop">取消</el-button>
           <el-button type="primary" size="mini" @click="addTopNode">确定</el-button>
@@ -35,7 +35,7 @@
           </span>
         </el-tree>
       </el-col>
-      <el-col :span="16" v-show="formVisiable" class="node-form">
+      <el-col :span="16" v-show="formVisible" class="node-form">
         <div class="node-name">
           <span>节点名称:</span>
           <el-input
@@ -59,15 +59,14 @@ import EntityAPIImpl from "@/api/impl/EntityAPIImpl";
   components: {}
 })
 export default class DataType extends Vue {
-  private formVisiable: boolean = false;
+  private formVisible: boolean = false;
   private dataTypeTree: DataTypeModel[] = [];
   private node: DataTypeModel = { label: "" };
   private doneEdit: boolean = false; // 页面是否有修改
   private entityAPI = new EntityAPIImpl();
   private loading: boolean = true;
-  private visible: boolean = false;
+  private propVisible: boolean = false;
   private newNode: string = "";
-  private myThis: any = this;
 
   private mounted() {
     // 初始化
@@ -87,7 +86,7 @@ export default class DataType extends Vue {
   private handleClick(data: any) {
     // 点击节点
     this.node = data;
-    this.formVisiable = true;
+    this.formVisible = true;
     const input = this.$refs.nodeName as any;
     input.focus();
   }
@@ -103,39 +102,26 @@ export default class DataType extends Vue {
     const children = parent.data.children || parent.data;
     const index = children.findIndex((d: any) => d.id === data.id);
     children.splice(index, 1);
-    this.formVisiable = false;
-  }
-
-  private getUUID() {
-    // 生成UUID
-    const s: any = [];
-    const hexDigits = "0123456789abcdef";
-    for (let i = 0; i < 36; i++) {
-      s[i] = hexDigits.substr(Math.floor(Math.random() * 0x10), 1);
-    }
-    s[14] = "4"; // bits 12-15 of the time_hi_and_version field to 0010
-    s[8] = s[13] = s[18] = s[23] = "";
-    const uuid = s.join("");
-    return uuid;
+    this.formVisible = false;
   }
 
   private showPop() {
-    this.visible = true;
+    this.propVisible = true;
     const input = this.$refs.newNode as any;
     input.focus();
   }
 
   private closePop() {
-    this.visible = false;
+    this.propVisible = false;
     this.newNode = "";
   }
 
   private addTopNode() {
     // 新增顶层节点
-    const node = { id: this.getUUID(), label: this.newNode };
+    const node = { label: this.newNode };
     this.dataTypeTree.unshift(node);
     this.doneEdit = true;
-    this.visible = false;
+    this.propVisible = false;
     this.newNode = "";
   }
 
@@ -151,8 +137,8 @@ export default class DataType extends Vue {
     this.entityAPI.creatOrUpdateDataType(this.dataTypeTree).then(({ data }) => {
       this.loading = false;
       this.doneEdit = false;
-      this.formVisiable = false;
-      this.myThis.$message({
+      this.formVisible = false;
+      this.$message({
         type: "success",
         message: "保存成功!"
       });
@@ -163,7 +149,7 @@ export default class DataType extends Vue {
   private beforeRouteLeave(to: any, from: any, next: () => void) {
     // 离开页面前保存
     if (this.doneEdit) {
-      this.myThis
+      this
         .$confirm(
           "检测到未保存的内容，是否在离开页面前保存修改？",
           "确认信息",

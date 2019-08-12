@@ -19,24 +19,30 @@ export default new Router({
       name: "entity",
       meta: { menuName: "图谱", iconClass: "&#xe75d;" },
       component: InnerLayout,
-      redirect: "/entity/classes",
+      redirect: "/entity/moduleList",
       children: [
+        {
+          path: "moduleList",
+          name: "moduleList",
+          meta: { menuName: "模块", iconClass: "" },
+          component: () => import("./views/entity/ModuleList.vue"),
+        },
         {
           path: "classes",
           name: "classes",
-          meta: { menuName: "本体图", iconClass: "" },
+          meta: { menuName: "本体图", iconClass: "", style: "display:none" },
           component: () => import("./views/entity/Classes.vue"),
         },
         {
           path: "objectProp",
           name: "objectProp",
-          meta: { menuName: "事件关系", iconClass: "" },
+          meta: { menuName: "事件关系", iconClass: "", style: "display:none" },
           component: () => import("./views/entity/ObjectProp.vue"),
         },
         {
           path: "dataProp",
           name: "dataProp",
-          meta: { menuName: "事件属性", iconClass: "" },
+          meta: { menuName: "事件属性", iconClass: "", style: "display:none" },
           component: () => import("./views/entity/DataProp.vue"),
         },
         {
@@ -52,7 +58,7 @@ export default new Router({
       name: "annotation",
       meta: { menuName: "标注", iconClass: "&#xe673;" },
       component: InnerLayout,
-      redirect: "/annotation/uploadFile",
+      redirect: "/annotation/docList",
       children: [
         {
           path: "docList",

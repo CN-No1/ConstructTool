@@ -4,8 +4,8 @@
       <el-select v-model="moduleId" placeholder="请选择模块" @change="selectmodule" :disabled="loading">
         <el-option v-for="item in modules" :key="item.id" :label="item.name" :value="item.id"></el-option>
       </el-select>
-      <el-popover ref="popover" placement="bottom" width="160" trigger="manual" v-model="visible">
-        <el-input ref="newNode" v-model="newNode"></el-input>
+      <el-popover ref="popover" placement="bottom" width="160" trigger="manual" v-model="propVisible">
+        <el-input ref="newNode" v-model="newNode" @keyup.enter.native="addTopNode"></el-input>
         <div style="text-align: right; margin: 0;padding-top:5px;">
           <el-button size="mini" type="danger" @click="closePop">取消</el-button>
           <el-button type="primary" size="mini" @click="addTopNode">确定</el-button>
@@ -44,7 +44,7 @@
           </span>
         </el-tree>
       </el-col>
-      <el-col :span="16" v-show="formVisiable" class="node-form">
+      <el-col :span="16" v-show="formVisible" class="node-form">
         <div class="node-name">
           <p>节点名称:</p>
           <el-input
@@ -91,7 +91,7 @@ import { FlatToNested } from "@/util/tranformTreeData";
 
 @Component({ components: { Treeselect } })
 export default class DataProp extends Vue {
-  private formVisiable: boolean = false;
+  private formVisible: boolean = false;
   private dataProp: DataPropModel = new DataPropModel(); // 数据属性对象
   private dataTypeList: any[] = []; // 数据类型列表
   private node: DataPropNode = { label: "", entityClass: [], dataType: "" }; // 被选中的节点
@@ -102,9 +102,8 @@ export default class DataProp extends Vue {
   private entityAPI = new EntityAPIImpl();
   private doneEdit: boolean = false; // 页面是否有修改
   private loading: boolean = true;
-  private visible: boolean = false;
-  private newNode: string = "";
-  private myThis: any = this;
+  private propVisible: boolean = false;  // 弹框是否显示
+  private newNode: string = "";  // 新增节点名
 
   private mounted() {
     // 初始化
@@ -112,7 +111,7 @@ export default class DataProp extends Vue {
     this.getDataProp();
     this.getEntityList();
     this.getDataTypeList();
-    this.dataProp.moduleId = this.moduleId;
+    this.dataProp.treeId = this.moduleId;
   }
 
   private getModule() {
@@ -123,7 +122,7 @@ export default class DataProp extends Vue {
   }
 
   private selectmodule(val: string) {
-    this.dataProp.moduleId = val;
+    this.dataProp.treeId = val;
     // 选择module查找class
     this.getDataProp();
     this.getEntityList();
@@ -161,7 +160,7 @@ export default class DataProp extends Vue {
   private handleClick(data: any) {
     // 点击节点编辑
     this.node = data;
-    this.formVisiable = true;
+    this.formVisible = true;
     const input = this.$refs.nodeName as any;
     input.focus();
   }
@@ -183,7 +182,7 @@ export default class DataProp extends Vue {
       this.$set(data, "children", []);
     }
     data.children.unshift(newChild);
-    this.formVisiable = true;
+    this.formVisible = true;
     this.node = newChild;
     const input = this.$refs.nodeName as any;
     input.focus();
@@ -192,14 +191,14 @@ export default class DataProp extends Vue {
 
   private remove(node: any, data: any) {
     // 删除当前节点
-    if (data.children) {
-      this.myThis.$message({
+    if (data.children && data.children.length > 0) {
+      this.$message({
         type: "error",
         message: "该节点有子节点，不可删除！"
       });
       return;
     }
-    this.myThis
+    this
       .$confirm("确认删除吗?", "提示", {
         confirmButtonText: "确定",
         cancelButtonText: "取消",
@@ -210,15 +209,15 @@ export default class DataProp extends Vue {
         const children = parent.data.children || parent.data;
         const index = children.findIndex((d: any) => d.id === data.id);
         children.splice(index, 1);
-        this.formVisiable = false;
-        this.myThis.$message({
+        this.formVisible = false;
+        this.$message({
           type: "success",
           message: "删除成功!"
         });
         this.doneEdit = true;
       })
       .catch(() => {
-        this.myThis.$message({
+        this.$message({
           type: "info",
           message: "已取消删除"
         });
@@ -226,13 +225,13 @@ export default class DataProp extends Vue {
   }
 
   private showPop() {
-    this.visible = true;
+    this.propVisible = true;
     const input = this.$refs.newNode as any;
     input.focus();
   }
 
   private closePop() {
-    this.visible = false;
+    this.propVisible = false;
     this.newNode = "";
   }
   private addTopNode() {
@@ -245,7 +244,7 @@ export default class DataProp extends Vue {
     };
     this.dataProp.dataPropList.unshift(node);
     this.doneEdit = true;
-    this.visible = false;
+    this.propVisible = false;
     this.newNode = "";
   }
 
@@ -261,8 +260,8 @@ export default class DataProp extends Vue {
     this.entityAPI.creatOrUpdateDataProp(this.dataProp).then(({ data }) => {
       this.loading = false;
       this.doneEdit = false;
-      this.formVisiable = false;
-      this.myThis.$message({
+      this.formVisible = false;
+      this.$message({
         type: "success",
         message: "保存成功!"
       });
@@ -272,7 +271,7 @@ export default class DataProp extends Vue {
   private beforeRouteLeave(to: any, from: any, next: () => void) {
     // 离开页面前保存
     if (this.doneEdit) {
-      this.myThis
+      this
         .$confirm(
           "检测到未保存的内容，是否在离开页面前保存修改？",
           "确认信息",

@@ -83,7 +83,6 @@ export default class Annotate extends Vue {
   private doneEdit: boolean = false; // 页面是否有修改
   private seletedWord: boolean = false; // 是否选中一个单词
   private loading: boolean = true;
-  private myThis: any = this;
 
   @Watch("editDoc", { immediate: true, deep: true })
   private docChange(newVal: any, oldVal: any) {
@@ -177,7 +176,7 @@ export default class Annotate extends Vue {
     this.annotationAPI.createOrUpdateAnnotation(this.doc).then((res: any) => {
       if (res.code === 0) {
         this.$emit("doneSave");
-        this.myThis.$message({
+        this.$message({
           message: "保存成功！",
           type: "success"
         });

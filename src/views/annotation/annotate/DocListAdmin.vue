@@ -88,7 +88,7 @@
             :total="total"
           ></el-pagination>
         </div>
-        <el-dialog title="新增文档" :visible.sync="dialogVisible" width="30%" @close="handleClose">
+        <el-dialog title="新增文档" :propVisible.sync="dialogVisible" width="30%" @close="handleClose">
           <el-form ref="form" label-width="100px">
             <el-form-item label="文档内容：">
               <el-input type="textarea" :rows="2" placeholder="请输入内容" v-model="textarea"></el-input>
@@ -163,7 +163,6 @@ export default class DocList extends Vue {
   private newModuleId: string = ""; // 新增文档模块id
   private annotationAPI = new AnnotationAPIImpl();
   private entityAPI = new EntityAPIImpl();
-  private myThis: any = this;
 
   private docContent(val: any) {
     if (val.content.length > 20) {
@@ -227,7 +226,7 @@ export default class DocList extends Vue {
   private clickRow(row: any) {
     const ref = this.$refs.annotator as any;
     if (ref.doneEdit) {
-      this.myThis
+      this
         .$confirm("检测到未保存的内容，是否在离开前保存修改？", "确认信息", {
           distinguishCancelAndClose: true,
           confirmButtonText: "保存",
@@ -276,7 +275,7 @@ export default class DocList extends Vue {
     };
     this.annotationAPI.createNLUDoc(doc).then(({ data }) => {
       this.dialogVisible = false;
-      this.myThis.$message({
+      this.$message({
         type: "success",
         message: "新增成功!"
       });
@@ -286,7 +285,7 @@ export default class DocList extends Vue {
 
   private deleteDoc(id: string) {
     // 删除文档
-    this.myThis
+    this
       .$confirm("此操作将永久删除该条数据, 是否继续?", "提示", {
         confirmButtonText: "确定",
         cancelButtonText: "取消",
@@ -295,14 +294,14 @@ export default class DocList extends Vue {
       .then(() => {
         this.annotationAPI.deleteNLUDoc(id).then(({ data }) => {
           this.getDocByParam();
-          this.myThis.$message({
+          this.$message({
             type: "success",
             message: "删除成功!"
           });
         });
       })
       .catch(() => {
-        this.myThis.$message({
+        this.$message({
           type: "info",
           message: "已取消删除"
         });

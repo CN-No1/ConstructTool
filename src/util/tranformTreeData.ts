@@ -1,4 +1,4 @@
-export const NestedToFlat = (data: any, moduleId: string, pid?: string) => {
+export const NestedToFlat = (data: any, treeId: string, pid?: string) => {
     // 嵌套转平铺
     let res: any[] = [];
     for (const item of data) {
@@ -7,41 +7,16 @@ export const NestedToFlat = (data: any, moduleId: string, pid?: string) => {
             label: item.label,
             description: item.description,
             bandFlag: item.bandFlag,
-            moduleId,
+            treeId,
             pid: pid || "0",
+            propList: item.propList
         });
         if (item.children) {
-            res = res.concat(NestedToFlat(item.children, moduleId, item.id));
+            res = res.concat(NestedToFlat(item.children, treeId, item.id));
         }
     }
     return res;
 };
-
-// export const FlatToNested = (data: any, option?: any) => {
-//     // 平铺转嵌套
-//     debugger;
-//     option = option || {};
-//     const idProperty = option.idProperty || "id";
-//     const parentProperty = option.parentProperty || "pid";
-//     const childrenProperty = option.childrenProperty || "children";
-//     const res = [];
-//     const tmpMap = [];
-//     for (const item of data) {
-//         tmpMap[item[idProperty]] = item;
-//         if (
-//             tmpMap[item[parentProperty]] &&
-//             item[idProperty] !== item[parentProperty]
-//         ) {
-//             if (!tmpMap[item[parentProperty]][childrenProperty]) {
-//                 tmpMap[item[parentProperty]][childrenProperty] = [];
-//             }
-//             tmpMap[item[parentProperty]][childrenProperty].push(item);
-//         } else {
-//             res.push(item);
-//         }
-//     }
-//     return res;
-// };
 
 export const FlatToNested = (arr: any[]) => {
     // 平铺转嵌套

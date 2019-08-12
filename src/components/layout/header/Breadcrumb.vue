@@ -1,7 +1,11 @@
 <template>
   <el-breadcrumb separator-class="el-icon-arrow-right">
     <el-breadcrumb-item :to="{ name: 'home' }">首页</el-breadcrumb-item>
-    <el-breadcrumb-item v-for="(item,index) in menuList" :key="index">{{item}}</el-breadcrumb-item>
+    <el-breadcrumb-item
+      v-for="(item,index) in menuList"
+      :key="index"
+      :to="{ name: item.name }"
+    >{{item.meta.menuName}}</el-breadcrumb-item>
   </el-breadcrumb>
 </template>
 
@@ -18,7 +22,7 @@ export default class Breadcrumb extends Vue {
     this.menuList = [];
     this.$route.matched.forEach((item) => {
       if (item.name !== "home") {
-        this.menuList.push(item.meta.menuName);
+        this.menuList.push(item);
       }
     });
   }

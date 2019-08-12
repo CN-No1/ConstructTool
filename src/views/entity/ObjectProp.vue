@@ -1,11 +1,11 @@
 <template>
   <div class="header" @click="closePop">
     <div>
-      <el-select v-model="moduleId" placeholder="请选择" @change="selectmodule" :disabled="loading">
+      <!-- <el-select v-model="moduleId" placeholder="请选择" @change="selectmodule" :disabled="loading">
         <el-option v-for="item in modules" :key="item.id" :label="item.name" :value="item.id"></el-option>
-      </el-select>
-      <el-popover ref="popover" placement="bottom" width="160" trigger="manual" v-model="visible">
-        <el-input ref="newNode" v-model="newNode"></el-input>
+      </el-select> -->
+      <el-popover ref="popover" placement="bottom" width="160" trigger="manual" v-model="propVisible">
+        <el-input ref="newNode" v-model="newNode" @keyup.enter.native="addTopNode"></el-input>
         <div style="text-align: right; margin: 0;padding-top:5px;">
           <el-button size="mini" type="danger" @click="closePop">取消</el-button>
           <el-button type="primary" size="mini" @click="addTopNode">确定</el-button>
@@ -44,7 +44,7 @@
           </span>
         </el-tree>
       </el-col>
-      <el-col :span="16" v-show="formVisiable" class="node-form">
+      <el-col :span="16" v-show="formVisible" class="node-form">
         <div class="node-name">
           <span>节点名称:</span>
           <el-input
@@ -102,30 +102,28 @@ import ObjectPropModel, {
 import { getUUID } from "@/util/uuid";
 import EntityAPIImpl from "@/api/impl/EntityAPIImpl";
 import { FlatToNested } from "@/util/tranformTreeData";
-import EntityFormMixin from "../../mixin/EntityFormMixin";
 
 @Component({ components: { Treeselect } })
 export default class ObjectProp extends Vue {
-  private formVisiable: boolean = false;
+  private formVisible: boolean = false;  // 右侧表单是否显示
   private objectProp: ObjectPropModel = new ObjectPropModel();
   private entityList: any[] = []; // 实体类树
   private node: ObjectPropNode = { label: "", relation: [] }; // 被选中的节点
-  private moduleId: string = "5d2fe2f28eb1330dcc8f46bd"; // 选中moduleId
+  private moduleId: string = ""; // 选中moduleId
   private modules: any[] = []; // module下拉数据
   private sortValueBy: string = "LEVEL"; // 选项排序方式（"ORDER_SELECTED"，"LEVEL"，"INDEX"）
   private doneEdit: boolean = false; // 页面是否有修改
   private entityAPI = new EntityAPIImpl();
   private loading: boolean = true;
-  private visible: boolean = false; // prop是否出现
-  private newNode: string = "";
-  private myThis: any = this;
+  private propVisible: boolean = false; // prop是否出现
+  private newNode: string = "";  // 新增节点名
 
   private mounted() {
     // 初始化
+    this.objectProp.treeId = this.$route.params.treeId;
     this.getModule();
     this.getObjectProp();
     this.getEntityList();
-    this.objectProp.moduleId = this.moduleId;
   }
 
   private getModule() {
@@ -136,7 +134,7 @@ export default class ObjectProp extends Vue {
   }
 
   private selectmodule(val: string) {
-    this.objectProp.moduleId = val;
+    this.objectProp.treeId = val;
     // 选择module查找class
     this.getObjectProp();
     this.getEntityList();
@@ -164,7 +162,7 @@ export default class ObjectProp extends Vue {
   private handleClick(data: ObjectPropNode) {
     // 点击树节点
     this.node = data;
-    this.formVisiable = true;
+    this.formVisible = true;
     const input = this.$refs.nodeName as any;
     input.focus();
   }
@@ -185,7 +183,7 @@ export default class ObjectProp extends Vue {
       this.$set(data, "children", []);
     }
     data.children.unshift(newChild);
-    this.formVisiable = true;
+    this.formVisible = true;
     this.node = newChild;
     const input = this.$refs.nodeName as any;
     input.focus();
@@ -194,14 +192,14 @@ export default class ObjectProp extends Vue {
 
   private remove(node: any, data: any) {
     // 删除当前节点
-    if (data.children) {
-      this.myThis.$message({
+    if (data.children && data.children.length > 0) {
+      this.$message({
         type: "error",
         message: "该节点有子节点，不可删除！"
       });
       return;
     }
-    this.myThis
+    this
       .$confirm("确认删除吗?", "提示", {
         confirmButtonText: "确定",
         cancelButtonText: "取消",
@@ -212,28 +210,28 @@ export default class ObjectProp extends Vue {
         const children = parent.data.children || parent.data;
         const index = children.findIndex((d: any) => d.id === data.id);
         children.splice(index, 1);
-        this.formVisiable = false;
-        this.myThis.$message({
+        this.formVisible = false;
+        this.$message({
           type: "success",
           message: "删除成功!"
         });
         this.doneEdit = true;
       })
       .catch(() => {
-        this.myThis.$message({
+        this.$message({
           type: "info",
           message: "已取消删除"
         });
       });
   }
   private showPop() {
-    this.visible = true;
+    this.propVisible = true;
     const input = this.$refs.newNode as any;
     input.focus();
   }
 
   private closePop() {
-    this.visible = false;
+    this.propVisible = false;
     this.newNode = "";
   }
 
@@ -246,7 +244,7 @@ export default class ObjectProp extends Vue {
     };
     this.objectProp.objectPropList.unshift(node);
     this.doneEdit = true;
-    this.visible = false;
+    this.propVisible = false;
     this.newNode = "";
   }
 
@@ -273,8 +271,8 @@ export default class ObjectProp extends Vue {
     this.entityAPI.creatOrUpdateObjectProp(this.objectProp).then(({ data }) => {
       this.loading = false;
       this.doneEdit = false;
-      this.formVisiable = false;
-      this.myThis.$message({
+      this.formVisible = false;
+      this.$message({
         type: "success",
         message: "保存成功!"
       });
@@ -285,7 +283,7 @@ export default class ObjectProp extends Vue {
   private beforeRouteLeave(to: any, from: any, next: () => void) {
     // 离开页面前保存
     if (this.doneEdit) {
-      this.myThis
+      this
         .$confirm(
           "检测到未保存的内容，是否在离开页面前保存修改？",
           "确认信息",
