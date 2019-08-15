@@ -1,26 +1,53 @@
 <template>
-  <div>
+  <div v-loading="uploading" element-loading-text="导入中，请稍后">
     <div class="header">
       <div>
-        <el-select
-          v-model="moduleId"
-          placeholder="请选择模块"
-          @change="selectModule"
-          :disabled="loading"
-        >
-          <el-option v-for="item in modules" :key="item.id" :label="item.name" :value="item.id"></el-option>
-        </el-select>
-        <el-select
-          v-model="statusCode"
-          placeholder="请选择状态"
-          @change="selectStatus"
-          :disabled="loading"
-        >
-          <el-option v-for="item in status" :key="item.id" :label="item.name" :value="item.id"></el-option>
-        </el-select>
-      </div>
-      <div>
-        <el-button type="success" @click="creatDoc">新增</el-button>
+        <el-tooltip class="item" effect="dark" content="所属领域" placement="top-start">
+          <el-select
+            v-model="moduleId"
+            placeholder="请选择领域"
+            @change="selectModule"
+            :disabled="loading"
+          >
+            <el-option v-for="item in modules" :key="item.id" :label="item.name" :value="item.id"></el-option>
+          </el-select>
+        </el-tooltip>
+        <el-tooltip class="item" effect="dark" content="标注状态" placement="top-start">
+          <el-select
+            v-model="statusCode"
+            placeholder="请选择状态"
+            @change="selectStatus"
+            :disabled="loading"
+          >
+            <el-option v-for="item in status" :key="item.id" :label="item.name" :value="item.id"></el-option>
+          </el-select>
+        </el-tooltip>
+        <div style="display: inline-block;">
+          <el-tooltip class="item" effect="dark" content="模糊查询" placement="top-start">
+            <el-input
+              v-model="queryDocContent"
+              placeholder="输入文档内容后回车"
+              @keyup.enter.native="getDocByParam"
+            ></el-input>
+          </el-tooltip>
+        </div>
+        <el-button size="medium" type="primary" @click="openUpload">导入文件</el-button>
+        <div style="float: right;" v-if="moduleId !== ''">
+          <el-select
+            v-model="treeId"
+            placeholder="请选择本体树"
+            @change="selectTree"
+            :disabled="loading"
+            no-data-text="请先选择具体领域"
+          >
+            <el-option
+              v-for="item in treeOptions"
+              :key="item.id"
+              :label="item.name"
+              :value="item.id"
+            ></el-option>
+          </el-select>
+        </div>
       </div>
     </div>
     <el-row type="flex">
@@ -34,9 +61,9 @@
           @row-click="clickRow"
         >
           <el-table-column prop="content" label="文章内容" :formatter="docContent" align="center"></el-table-column>
-          <el-table-column prop="moduleName" label="模块" align="center">
+          <el-table-column prop="moduleName" label="用途" align="center">
             <template slot-scope="scope">
-              <el-tag close-transition>{{scope.row.moduleName}}</el-tag>
+              <el-tag close-transition>{{scope.row.purpose}}</el-tag>
             </template>
           </el-table-column>
           <el-table-column prop label="标注状态" :formatter="statusFmt" align="center">
@@ -88,38 +115,43 @@
             :total="total"
           ></el-pagination>
         </div>
-        <el-dialog title="新增文档" :propVisible.sync="dialogVisible" width="30%" @close="handleClose">
-          <el-form ref="form" label-width="100px">
-            <el-form-item label="文档内容：">
-              <el-input type="textarea" :rows="2" placeholder="请输入内容" v-model="textarea"></el-input>
-            </el-form-item>
-            <el-form-item label="所属模块：">
-              <el-select v-model="newModuleId" placeholder="请选择模块">
-                <el-option
-                  v-for="item in modules"
-                  :key="item.id"
-                  :label="item.name"
-                  :value="item.id"
-                ></el-option>
-              </el-select>
-            </el-form-item>
-          </el-form>
-
-          <span slot="footer" class="dialog-footer">
-            <el-button @click="dialogVisible = false">取 消</el-button>
-            <el-button type="primary" @click="saveDoc">保 存</el-button>
-          </span>
-        </el-dialog>
       </el-col>
       <el-col :span="12" class="edit-area">
         <div v-show="isEdit" class="edit-form">
-          <annotate ref="annotator" :editDoc="editDoc" @doneSave="doneSave"></annotate>
+          <annotate ref="annotator" :editDoc="editDoc" :treeId="treeId" @doneSave="doneSave"></annotate>
         </div>
         <div v-show="!isEdit" class="tips">
           <span>请点击一行进行编辑</span>
         </div>
       </el-col>
     </el-row>
+    <el-dialog title="上传文件" :visible.sync="dialogVisible" width="30%" :before-close="handleClose">
+      <el-form ref="form" label-width="100px">
+        <el-form-item label="所属领域：">
+          <el-select v-model="uploadForm.newModuleId" placeholder="请选择领域">
+            <el-option v-for="item in modules" :key="item.id" :label="item.name" :value="item.id"></el-option>
+          </el-select>
+        </el-form-item>
+        <el-form-item label="用途：">
+          <el-input placeholder="请输入用途" v-model="uploadForm.newPurpose"></el-input>
+        </el-form-item>
+      </el-form>
+      <el-upload
+        action="/api/annotation/parseJson"
+        ref="upload"
+        :data="uploadForm"
+        :on-success="uploadSuccess"
+        :on-progress="uploadProcess"
+        :before-upload="beforeUpload"
+        :auto-upload="false"
+      >
+        <el-button slot="trigger" size="small" type="primary">选取文件</el-button>
+        <el-button style="margin-left: 10px;" size="small" type="success" @click="submitUpload">上传</el-button>
+      </el-upload>
+      <span slot="footer" class="dialog-footer">
+        <el-button @click="dialogVisible = false">取 消</el-button>
+      </span>
+    </el-dialog>
   </div>
 </template>
 
@@ -138,31 +170,39 @@ export default class DocList extends Vue {
   private modules: ModuleModel[] = [];
   private status: any[] = [
     {
+      id: "",
+      name: "全部"
+    },
+    {
       id: "0",
       name: "未标注"
     },
     {
       id: "1",
       name: "已标注"
-    },
-    {
-      id: "",
-      name: "全部"
     }
   ];
-  private moduleId: string = "5d2fe2f28eb1330dcc8f46bd"; // 模块Id，默认为道路交通
-  private statusCode: string = "0"; // 状态码
+  private moduleId: string = ""; // 领域Id，默认为道路交通
+  private statusCode: string = ""; // 状态码
   private page: number = 1; // 当前页
   private size: number = 10; // 每页多少条
   private total: number = 100; // 总条数
-  private loading = true; // 表格loading
+  private loading = false; // 表格loading
   private isEdit = false; // 是否在编辑状态
   private editDoc = new NLUEntity(); // 编辑中文档对象
-  private dialogVisible: boolean = false; // 对话框
-  private textarea: string = ""; // 新增文档内容
-  private newModuleId: string = ""; // 新增文档模块id
+  // private dialogVisible: boolean = false; // 对话框
+  // private textarea: string = ""; // 新增文档内容
   private annotationAPI = new AnnotationAPIImpl();
   private entityAPI = new EntityAPIImpl();
+  private videoUploadPercent: number = 0; // 文件上传进度
+  private dialogVisible: boolean = false; // 文件上传框
+  private uploadForm: any = { newModuleId: "", newPurpose: "" }; // 上传表单对象
+  private newModuleId: string = ""; // 新增文档领域id
+  private newPurpose: string = ""; // 新增文档的用途
+  private uploading: boolean = false; // 导入文件loading
+  private treeOptions: any[] = []; // 树下拉选项
+  private treeId: string = ""; // 选中的树id
+  private queryDocContent: string = ""; // 模糊查询文档内容
 
   private docContent(val: any) {
     if (val.content.length > 20) {
@@ -188,6 +228,7 @@ export default class DocList extends Vue {
     // 获取module
     this.entityAPI.getModule().then(({ data }: any) => {
       this.modules = data;
+      this.modules.unshift({ id: "", name: "全部" });
     });
   }
 
@@ -195,7 +236,13 @@ export default class DocList extends Vue {
     this.loading = true;
     // 根据条件查询文档
     this.annotationAPI
-      .getDocByParam(this.moduleId, this.statusCode, this.page - 1, this.size)
+      .getDocByParam(
+        this.moduleId,
+        this.statusCode,
+        this.queryDocContent,
+        this.page - 1,
+        this.size
+      )
       .then(({ data }) => {
         this.total = data.totalElements;
         this.tableData = data.content;
@@ -205,33 +252,50 @@ export default class DocList extends Vue {
   }
 
   private handleSizeChange(val: any) {
+    // 改变一页显示条数
     this.size = val;
     this.getDocByParam();
   }
 
   private handleCurrentChange(val: any) {
+    // 翻页
     this.page = val;
     this.getDocByParam();
   }
 
   private selectModule(val: any) {
+    // 选择模块，获取文档和树
+    this.page = 1;
     this.getDocByParam();
+    this.getTrees(val);
+  }
+
+  private getTrees(moduleId: string) {
+    // 获取树下拉框选项
+    this.entityAPI.getTree(moduleId).then(({ data }) => {
+      this.treeOptions = data;
+    });
+  }
+
+  private selectTree(val: any) {
+    // 选中树，获取本体
   }
 
   private selectStatus(val: any) {
+    // 选择状态
     this.page = 1;
     this.getDocByParam();
   }
 
   private clickRow(row: any) {
+    // 选中一行
     const ref = this.$refs.annotator as any;
     if (ref.doneEdit) {
-      this
-        .$confirm("检测到未保存的内容，是否在离开前保存修改？", "确认信息", {
-          distinguishCancelAndClose: true,
-          confirmButtonText: "保存",
-          cancelButtonText: "放弃修改"
-        })
+      this.$confirm("检测到未保存的内容，是否在离开前保存修改？", "确认信息", {
+        distinguishCancelAndClose: true,
+        confirmButtonText: "保存",
+        cancelButtonText: "放弃修改"
+      })
         .then(() => {
           ref.saveAll();
           this.getDocByParam();
@@ -251,46 +315,54 @@ export default class DocList extends Vue {
   }
 
   private doneSave() {
+    // 组件内保存
     this.getDocByParam();
   }
 
-  private creatDoc() {
-    // 新增文档
-    this.dialogVisible = true;
+  private submitUpload() {
+    // 手动上传文件
+    const upload = this.$refs.upload as any;
+    upload.submit();
   }
 
   private handleClose() {
     // 关闭新增对话框
-    this.textarea = "";
+    this.newPurpose = "";
     this.newModuleId = "";
+    this.dialogVisible = false;
   }
 
-  private saveDoc() {
-    // 新增文档
-    const doc: NLUEntity = {
-      content: this.textarea,
-      moduleId: this.newModuleId,
-      status: "0",
-      annotationList: []
-    };
-    this.annotationAPI.createNLUDoc(doc).then(({ data }) => {
-      this.dialogVisible = false;
-      this.$message({
-        type: "success",
-        message: "新增成功!"
-      });
-      this.getDocByParam();
+  private openUpload() {
+    // 打开文件上传对话框
+    this.dialogVisible = true;
+  }
+
+  private uploadSuccess() {
+    // 上传成功钩子
+    this.$message({
+      type: "success",
+      message: "导入成功"
     });
+    this.page = 1;
+    this.uploading = false;
+    this.getDocByParam();
+  }
+
+  private uploadProcess(event: any) {
+    // 上传进度
+    if (event.percent === 100) {
+      this.dialogVisible = false;
+      this.uploading = true;
+    }
   }
 
   private deleteDoc(id: string) {
     // 删除文档
-    this
-      .$confirm("此操作将永久删除该条数据, 是否继续?", "提示", {
-        confirmButtonText: "确定",
-        cancelButtonText: "取消",
-        type: "warning"
-      })
+    this.$confirm("此操作将永久删除该条数据, 是否继续?", "提示", {
+      confirmButtonText: "确定",
+      cancelButtonText: "取消",
+      type: "warning"
+    })
       .then(() => {
         this.annotationAPI.deleteNLUDoc(id).then(({ data }) => {
           this.getDocByParam();
@@ -306,6 +378,19 @@ export default class DocList extends Vue {
           message: "已取消删除"
         });
       });
+  }
+
+  private beforeUpload() {
+    // 上传前钩子
+    if (
+      this.uploadForm.newModuleId !== "" &&
+      this.uploadForm.newPurpose !== ""
+    ) {
+      return true;
+    } else {
+      this.$message.error("请填写完整！");
+      return false;
+    }
   }
 }
 </script>

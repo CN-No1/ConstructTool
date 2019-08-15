@@ -22,16 +22,16 @@
           @node-click="handleClick"
           draggable
         >
-          <span class="custom-tree-node" slot-scope="{ node, data }">
+          <span class="custom-tree-node" slot-scope="{ node }">
             <span>{{ node.label }}</span>
-            <span>
+            <!-- <span>
               <el-button
                 type="text"
                 size="mini"
                 @click.stop="() => remove(node, data)"
                 icon="el-icon-delete"
               ></el-button>
-            </span>
+            </span> -->
           </span>
         </el-tree>
       </el-col>

@@ -21,16 +21,23 @@ class AnnotationAPIImpl extends BaseAPI implements AnnotationAPI {
         return await this.instance.get("getDocById?id=" + id);
     }
 
-    public async getDocByParam(moduleId: string, status: string, page: number, size: number): Promise<any> {
+    public async getDocByParam(
+        moduleId: string, status: string, docContent: string, page: number, size: number): Promise<any> {
         return await this.instance.get(
-            "getDocByParam?moduleId=" + moduleId + "&status=" + status + "&page=" + page + "&size=" + size);
+            "getDocByParam?moduleId=" + moduleId + "&status=" + status + "&docContent=" + docContent + "&page="
+            + page + "&size=" + size);
     }
 
     public async createNLUDoc(doc: NLUEntity): Promise<any> {
         return await this.instance.post("createNLUDoc", JSON.stringify(doc));
     }
+
     public async deleteNLUDoc(id: string): Promise<any> {
         return await this.instance.delete("deleteNLUDoc?id=" + id);
+    }
+
+    public async parseJson(uploadObj: any): Promise<any> {
+        return await this.instance.post("parseJson", JSON.stringify(uploadObj));
     }
 }
 

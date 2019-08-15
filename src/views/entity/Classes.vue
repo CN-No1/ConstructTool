@@ -16,6 +16,7 @@
         <el-button slot="reference" @click.stop="showPop" type="primary">新增顶层节点</el-button>
       </el-popover>
       <el-button type="success" @click="save">保存</el-button>
+      <el-button type="info" @click="goBack">返回</el-button>
       <!-- <el-button type="text" @click="output" style="float:right;">导出数据</el-button> -->
     </div>
     <el-row>
@@ -88,7 +89,6 @@
                     <el-input v-model="tagVal" @keyup.enter.native="addTag(row)"></el-input>
                   </div>
                 </div>
-                <!-- <input-tag v-if="row.propType==='5d50d8210b5f5a20f86a86ea'" :value="propValFmt(row.propVal)" :before-adding="addTag"></input-tag> -->
                 <!-- 日期类型 -->
                 <span v-if="row.propType==='5d50d8210b5f5a20f86a86e9'">不需要输入</span>
               </template>
@@ -344,11 +344,15 @@ export default class Entity extends Vue {
 
   private addTag(row: any) {
     // 添加枚举
+    if (this.tagVal === "") {
+      this.$message.error("请不要添加空值！");
+      return;
+    }
     if (row.tags.includes(this.tagVal)) {
       this.$message.error("请不要添加重复的值！");
       return;
     }
-    if (row.propVal != "") {
+    if (row.propVal !== "") {
       row.propVal = row.propVal.concat("," + this.tagVal);
     } else {
       row.propVal = this.tagVal;
@@ -376,6 +380,14 @@ export default class Entity extends Vue {
         type: "success",
         message: "保存成功!"
       });
+    });
+  }
+
+  private goBack() {
+    // 返回列表页
+    this.$router.push({
+      name: "moduleList",
+      params: { moduleChecked: this.$route.params.moduleChecked }
     });
   }
 
@@ -417,10 +429,7 @@ export default class Entity extends Vue {
   }
 }
 .tags {
-  border: 1px solid #d6d6d6;
+  border: 1px solid #f9f9f9;
   border-radius: 5px;
-  .el-input__inner{
-    border: 0;
-  }
 }
 </style>

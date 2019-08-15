@@ -1,7 +1,7 @@
 class ObjectPropModel {
     // 数据属性对象
     public id?: string;
-    public treeId?: string;
+    public treeId!: string;
     public objectPropList!: ObjectPropNode[];
     constructor() {
         this.id = "";

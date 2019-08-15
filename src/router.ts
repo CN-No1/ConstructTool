@@ -24,7 +24,7 @@ export default new Router({
         {
           path: "moduleList",
           name: "moduleList",
-          meta: { menuName: "模块", iconClass: "" },
+          meta: { menuName: "领域", iconClass: "" },
           component: () => import("./views/entity/ModuleList.vue"),
         },
         {
@@ -48,7 +48,7 @@ export default new Router({
         {
           path: "dataType",
           name: "dataType",
-          meta: { menuName: "数据类型", iconClass: "" },
+          meta: { menuName: "数据类型", iconClass: "", style: "display:none" },
           component: () => import("./views/entity/DataType.vue"),
         },
       ],

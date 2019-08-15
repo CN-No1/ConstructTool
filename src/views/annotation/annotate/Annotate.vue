@@ -21,6 +21,7 @@
           :searchable="true"
           :sort-value-by="sortValueBy"
           :flat="true"
+          noOptionsText="请先选择本体树"
           placeholder="请选择文本所属实体"
         />
         <span slot="footer" class="dialog-footer">
@@ -39,7 +40,7 @@
         <el-table-column prop="entity" label="关联实体" width="180"></el-table-column>
         <el-table-column label="操作">
           <template slot-scope="scope">
-            <el-button type="danger" icon="el-icon-delete" circle @click="deleteRow(scope)"></el-button>
+            <el-button type="danger" icon="el-icon-delete" circle @click="deleteRow(scope.row)"></el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -71,6 +72,9 @@ export default class Annotate extends Vue {
   @Prop()
   private editDoc!: NLUEntity;
 
+  @Prop()
+  private treeId!: string;
+
   private doc: NLUEntity = { content: "", annotationList: [] }; //  文档对象
   private annotation = new AnnotationModel();
   private dialogVisible: boolean = false; // 对话框显示
@@ -88,7 +92,13 @@ export default class Annotate extends Vue {
   private docChange(newVal: any, oldVal: any) {
     this.doc = Object.assign(this.doc, newVal);
     this.init();
-    this.getEntityList();
+    this.loading = false;
+    // this.getEntityList();
+  }
+
+  @Watch("treeId", { immediate: true, deep: true })
+  private treeIdChange(newVal: any, oldVal: any) {
+    this.getEntityList(newVal);
   }
 
   private rowStyle() {
@@ -104,9 +114,9 @@ export default class Annotate extends Vue {
     this.entityArr = [];
   }
 
-  private getEntityList() {
+  private getEntityList(treeId: string) {
     // 获取实体类树
-    this.entityAPI.getClass(this.doc.moduleId).then(({ data }) => {
+    this.entityAPI.getClass(treeId).then(({ data }) => {
       if (data) {
         this.entityList = FlatToNested(data);
       }
@@ -134,7 +144,7 @@ export default class Annotate extends Vue {
   private addLabel(offset: any) {
     // 添加标注点
     this.doc.annotationList = [];
-    this.entityArr.forEach((item) => {
+    this.entityArr.forEach((item: any) => {
       const newLabel: Annotation = {
         startOffset: offset.startOffset,
         endOffset: offset.endOffset,
@@ -151,13 +161,13 @@ export default class Annotate extends Vue {
     this.seletedWord = true;
     this.entityArr = [];
     const innerTableData = this.doc.annotationList.filter(
-      (item) => item.value === value
+      (item: any) => item.value === value
     );
     this.text = value;
-    innerTableData.forEach((item) => {
+    innerTableData.forEach((item: any) => {
       const obj = {
         id: item.entityId,
-        label: item.value
+        label: item.entity
       };
       this.entityArr.push(obj);
     });
@@ -165,10 +175,18 @@ export default class Annotate extends Vue {
 
   private deleteRow(row: any) {
     // 删除一行
-    this.doc.annotationList.splice(row.$index, 1);
+    const result: any[] = [];
+    // 为了防止影响原数组，object.assign仅为一层深拷贝，故不能直接操作数组或对象
+    this.doc.annotationList.forEach((item: any) => {
+      if (item.entityId !== row.entityId) {
+        result.push(item);
+      }
+    });
+    this.doc.annotationList = result;
     this.entityArr = this.entityArr.filter(
-      (item) => item.id !== row.row.entityId
+      (item: any) => item.id !== row.row.entityId
     );
+    this.doneEdit = true;
   }
 
   private saveAll() {

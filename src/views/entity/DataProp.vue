@@ -1,7 +1,7 @@
 <template>
   <div class="header" @click="closePop">
     <div>
-      <el-select v-model="moduleId" placeholder="请选择模块" @change="selectmodule" :disabled="loading">
+      <el-select v-model="moduleId" placeholder="请选择领域" @change="selectmodule" :disabled="loading">
         <el-option v-for="item in modules" :key="item.id" :label="item.name" :value="item.id"></el-option>
       </el-select>
       <el-popover ref="popover" placement="bottom" width="160" trigger="manual" v-model="propVisible">

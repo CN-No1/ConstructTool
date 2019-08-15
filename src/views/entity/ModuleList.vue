@@ -1,10 +1,10 @@
 <template>
   <div>
     <div style="margin-bottom: 30px;" v-if="!showTable">
-      <el-button type="success" @click="newModule">新增模块</el-button>
+      <el-button type="success" @click="newModule">新增领域</el-button>
     </div>
     <div v-if="moduleChecked.name!=''">
-      <span>当前模块：</span>
+      <span>当前领域：</span>
       <el-tag closable @close="handleTagClose()">{{moduleChecked.name}}</el-tag>
     </div>
     <div class="module-list" v-if="!showTable" v-loading="loading">
@@ -93,7 +93,7 @@
     </div>
     <el-dialog
       :title="dialogTitle"
-      :propVisible.sync="dialogVisible"
+      :visible.sync="dialogVisible"
       width="30%"
       :before-close="handleClose"
     >
@@ -120,7 +120,7 @@ import TreeModel from "../../api/model/TreeModel";
   components: {}
 })
 export default class DataType extends Vue {
-  private moduleList: any[] = []; // 模块列表
+  private moduleList: any[] = []; // 领域列表
   private treeList: any[] = []; // 树列表
   private showTable: boolean = false; // 表格是否展示
   private moduleChecked: any = { id: "", name: "" };
@@ -130,21 +130,25 @@ export default class DataType extends Vue {
   private dialogVisible: boolean = false; // 对话框是否展示
   private dialogTitle: string = ""; // 对话框标题
   private newName: string = ""; // 新增的名字
-  private flag: number = 0; // 区分新增的是树还是模块，0：模块 1：树
+  private flag: number = 0; // 区分新增的是树还是领域，0：领域 1：树
   private loading: boolean = true;
   private activeNames: any[] = [];
 
   private mounted() {
     // 初始化
     this.getModule();
+    if (this.$route.params.moduleChecked) {
+      this.moduleChecked = this.$route.params.moduleChecked;
+      this.getTree();
+    }
   }
 
   private getModule() {
-    // 获取模块列表
+    // 获取领域列表
     this.loading = true;
     this.api.getModule().then(({ data }) => {
       this.moduleList = data;
-      this.moduleList.map(item => {
+      this.moduleList.map((item) => {
         item.editMode = false;
       });
       this.loading = false;
@@ -153,6 +157,7 @@ export default class DataType extends Vue {
 
   private getTree() {
     // 获取树列表
+    this.showTable = true;
     this.loading = true;
     this.api.getTree(this.moduleChecked.id).then(({ data }) => {
       this.treeList = data;
@@ -161,14 +166,14 @@ export default class DataType extends Vue {
   }
 
   private newModule() {
-    // 新增模块框打开
+    // 新增领域框打开
     this.dialogVisible = true;
-    this.dialogTitle = "新增模块";
+    this.dialogTitle = "新增领域";
     this.flag = 0;
   }
 
   private createModuleOrTree() {
-    // 新增模块或树
+    // 新增领域或树
     if (this.flag) {
       const treeModel: TreeModel = {
         name: this.newName,
@@ -187,8 +192,8 @@ export default class DataType extends Vue {
         name: this.newName
       };
       this.handleClose();
-      this.api.createOrUpdateModule(moduleModel).then(res => {
-        if (res.code === 0) {
+      this.api.createOrUpdateModule(moduleModel).then(({ code }) => {
+        if (code === 0) {
           this.$message({
             type: "success",
             message: "新增成功!"
@@ -200,15 +205,15 @@ export default class DataType extends Vue {
   }
 
   private deleteModule(id: string) {
-    // 删除模块
+    // 删除领域
     this.$confirm("确认删除吗?", "提示", {
       confirmButtonText: "确定",
       cancelButtonText: "取消",
       type: "warning"
     })
       .then(() => {
-        this.api.deleteModule(id).then(res => {
-          if (res.code === 0) {
+        this.api.deleteModule(id).then(({ code }) => {
+          if (code === 0) {
             this.$message({
               type: "success",
               message: "删除成功!"
@@ -232,10 +237,10 @@ export default class DataType extends Vue {
   }
 
   private saveModuleChange(i: any) {
-    // 保存模块修改
+    // 保存领域修改
     ++this.mainKey;
     i.editMode = false;
-    this.api.createOrUpdateModule(i).then(res => {
+    this.api.createOrUpdateModule(i).then(({ code }) => {
       this.$message({
         type: "success",
         message: "修改成功!"
@@ -244,14 +249,13 @@ export default class DataType extends Vue {
   }
 
   private showTreeList(i: any) {
-    // 查看模块树列表
-    this.showTable = true;
+    // 查看领域树列表
     this.moduleChecked = Object.assign(this.moduleChecked, i);
     this.getTree();
   }
 
   private handleTagClose() {
-    // 重新选择模块
+    // 重新选择领域
     this.showTable = false;
     this.moduleChecked.name = "";
   }
@@ -267,7 +271,7 @@ export default class DataType extends Vue {
     // 保存对树的修改
     ++this.mainKey;
     this.editable[scope.$index] = false;
-    this.api.createOrUpdateTree(scope.row).then(res => {
+    this.api.createOrUpdateTree(scope.row).then(({ code }) => {
       this.$message({
         type: "success",
         message: "修改成功!"
@@ -289,8 +293,8 @@ export default class DataType extends Vue {
       type: "warning"
     })
       .then(() => {
-        this.api.deleteTree(id).then(res => {
-          if (res.code === 0) {
+        this.api.deleteTree(id).then(({ code }) => {
+          if (code === 0) {
             this.$message({
               type: "success",
               message: "删除成功!"
@@ -317,7 +321,7 @@ export default class DataType extends Vue {
     // 编辑关系
     this.$router.push({
       name: "objectProp",
-      params: { treeId: id, moduleId: this.moduleChecked.id }
+      params: { treeId: id, moduleChecked: this.moduleChecked }
     });
   }
 
@@ -325,7 +329,7 @@ export default class DataType extends Vue {
     // 编辑实体
     this.$router.push({
       name: "classes",
-      params: { treeId: id, moduleId: this.moduleChecked.id }
+      params: { treeId: id, moduleChecked: this.moduleChecked }
     });
   }
 }
