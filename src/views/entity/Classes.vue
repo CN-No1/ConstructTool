@@ -8,7 +8,12 @@
         trigger="manual"
         v-model="propVisible"
       >
-        <el-input ref="newNode" v-model="newNode" @keyup.enter.native="addTopNode"></el-input>
+        <el-input
+          ref="newNode"
+          v-model="newNode"
+          @keyup.enter.native="addTopNode"
+          placeholder="回车键快速添加"
+        ></el-input>
         <div style="text-align: right; margin: 0;padding-top:5px;">
           <el-button size="mini" type="danger" @click="closePop">取消</el-button>
           <el-button type="primary" size="mini" @click="addTopNode">确定</el-button>
@@ -17,7 +22,7 @@
       </el-popover>
       <el-button type="success" @click="save">保存</el-button>
       <el-button type="info" @click="goBack">返回</el-button>
-      <!-- <el-button type="text" @click="output" style="float:right;">导出数据</el-button> -->
+      <el-button type="text" @click="output" style="float:right;">导出数据</el-button>
     </div>
     <el-row>
       <el-col :span="8" v-loading="loading">
@@ -143,9 +148,9 @@ import EntityAPIImpl from "@/api/impl/EntityAPIImpl";
 import { getUUID } from "@/util/uuid";
 import EntityClassNode, { PropRow } from "@/api/model/EntityClassModel";
 import { NestedToFlat, FlatToNested } from "@/util/tranformTreeData";
-import InputTag from "vue-input-tag";
+import { saveAs } from "file-saver";
 
-@Component({ components: { InputTag } })
+@Component({})
 export default class Entity extends Vue {
   private treeId: string = "";
   private formVisible: boolean = false; // 右侧表单是否显示
@@ -389,6 +394,30 @@ export default class Entity extends Vue {
       name: "moduleList",
       params: { moduleChecked: this.$route.params.moduleChecked }
     });
+  }
+
+  private output() {
+    // 导出数据
+    this.$confirm("确认将当前数据导出为文件吗？", "提示", {
+      confirmButtonText: "确定",
+      cancelButtonText: "取消",
+      type: "warning"
+    })
+      .then(() => {
+        const data = NestedToFlat(this.entityClass, this.treeId);
+        const blob = new Blob([JSON.stringify(data)], { type: "" });
+        saveAs(blob, "data.json");
+        this.$message({
+          type: "success",
+          message: "导出成功!"
+        });
+      })
+      .catch(() => {
+        this.$message({
+          type: "info",
+          message: "已取消"
+        });
+      });
   }
 
   private beforeRouteLeave(to: any, from: any, next: () => void) {

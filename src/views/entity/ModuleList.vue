@@ -25,7 +25,7 @@
               <el-input v-model="item.name" @blur="saveModuleChange(item)" v-if="item.editMode"></el-input>
               <div class="bottom clearfix">
                 <el-collapse v-model="activeNames">
-                  <el-collapse-item title="更多操作" name="1">
+                  <el-collapse-item title="更多操作" :name="item.name">
                     <el-button
                       type="danger"
                       icon="el-icon-delete"
@@ -332,6 +332,7 @@ export default class DataType extends Vue {
       params: { treeId: id, moduleChecked: this.moduleChecked }
     });
   }
+
 }
 </script>
 

@@ -88,7 +88,7 @@ export default class Annotate extends Vue {
   private seletedWord: boolean = false; // 是否选中一个单词
   private loading: boolean = true;
 
-  @Watch("editDoc", { immediate: true, deep: true })
+  @Watch("editDoc", { immediate: true })
   private docChange(newVal: any, oldVal: any) {
     this.doc = Object.assign(this.doc, newVal);
     this.init();
@@ -143,8 +143,9 @@ export default class Annotate extends Vue {
 
   private addLabel(offset: any) {
     // 添加标注点
-    this.doc.annotationList = [];
+    // this.doc.annotationList = [];
     this.entityArr.forEach((item: any) => {
+      let flag: boolean = false; // 判断是否已存在相同本体
       const newLabel: Annotation = {
         startOffset: offset.startOffset,
         endOffset: offset.endOffset,
@@ -152,7 +153,16 @@ export default class Annotate extends Vue {
         entityId: item.id,
         entity: item.label
       };
-      this.doc.annotationList.push(newLabel);
+      this.doc.annotationList.forEach((i: any) => {
+        if (i.value === newLabel.value) {
+          if (i.entityId === newLabel.entityId) {
+            flag = true;
+          }
+        }
+      });
+      if (!flag) {
+        this.doc.annotationList.push(newLabel);
+      }
     });
   }
 
@@ -178,7 +188,7 @@ export default class Annotate extends Vue {
     const result: any[] = [];
     // 为了防止影响原数组，object.assign仅为一层深拷贝，故不能直接操作数组或对象
     this.doc.annotationList.forEach((item: any) => {
-      if (item.entityId !== row.entityId) {
+      if (item.entityId !== row.entityId || item.value !== row.value) {
         result.push(item);
       }
     });

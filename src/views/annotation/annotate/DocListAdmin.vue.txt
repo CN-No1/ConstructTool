@@ -203,7 +203,9 @@ export default class DocList extends Vue {
   private treeOptions: any[] = []; // 树下拉选项
   private treeId: string = ""; // 选中的树id
   private queryDocContent: string = ""; // 模糊查询文档内容
-
+  private purpose: string = ""; // 用途
+  private purposeOption: any[] = []; // 用途下拉框
+  
   private docContent(val: any) {
     if (val.content.length > 20) {
       return val.content.substr(0, 20).concat("...");
@@ -239,6 +241,7 @@ export default class DocList extends Vue {
       .getDocByParam(
         this.moduleId,
         this.statusCode,
+        this.purpose,
         this.queryDocContent,
         this.page - 1,
         this.size

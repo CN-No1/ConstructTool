@@ -66,12 +66,12 @@ export default new Router({
           meta: { menuName: "NLU", iconClass: "" },
           component: () => import("./views/annotation/annotate/DocList.vue"),
         },
-        {
-          path: "docList-admin",
-          name: "docList-admin",
-          meta: { menuName: "管理员界面", iconClass: "", style: "display:none" },
-          component: () => import("./views/annotation/annotate/DocListAdmin.vue"),
-        },
+        // {
+        //   path: "docList-admin",
+        //   name: "docList-admin",
+        //   meta: { menuName: "管理员界面", iconClass: "", style: "display:none" },
+        //   component: () => import("./views/annotation/annotate/DocListAdmin.vue"),
+        // },
       ],
     },
   ],

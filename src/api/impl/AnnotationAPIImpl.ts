@@ -22,10 +22,11 @@ class AnnotationAPIImpl extends BaseAPI implements AnnotationAPI {
     }
 
     public async getDocByParam(
-        moduleId: string, status: string, docContent: string, page: number, size: number): Promise<any> {
+        moduleId: string, status: string, purpose: string,
+        docContent: string, page: number, size: number): Promise<any> {
         return await this.instance.get(
-            "getDocByParam?moduleId=" + moduleId + "&status=" + status + "&docContent=" + docContent + "&page="
-            + page + "&size=" + size);
+            "getDocByParam?moduleId=" + moduleId + "&status=" + status + "&purpose=" + purpose
+            + "&docContent=" + docContent + "&page=" + page + "&size=" + size);
     }
 
     public async createNLUDoc(doc: NLUEntity): Promise<any> {
@@ -38,6 +39,10 @@ class AnnotationAPIImpl extends BaseAPI implements AnnotationAPI {
 
     public async parseJson(uploadObj: any): Promise<any> {
         return await this.instance.post("parseJson", JSON.stringify(uploadObj));
+    }
+
+    public async getPurpose(moduleId: any): Promise<any> {
+        return await this.instance.get("getPurpose?moduleId=" + moduleId);
     }
 }
 

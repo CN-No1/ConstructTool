@@ -22,9 +22,29 @@
             <el-option v-for="item in status" :key="item.id" :label="item.name" :value="item.id"></el-option>
           </el-select>
         </el-tooltip>
+        <el-tooltip class="item" effect="dark" content="用途" placement="top-start">
+          <el-select
+            v-model="purpose"
+            placeholder="请选择用途"
+            @change="selectPurpose"
+            :disabled="loading"
+            no-data-text="请先选择具体领域"
+          >
+            <el-option
+              v-for="item in purposeOption"
+              :key="item.id"
+              :label="item.name"
+              :value="item.name"
+            ></el-option>
+          </el-select>
+        </el-tooltip>
         <div style="display: inline-block;">
           <el-tooltip class="item" effect="dark" content="模糊查询" placement="top-start">
-            <el-input v-model="queryDocContent" placeholder="输入文档内容后回车" @keyup.enter.native="getDocByParam"></el-input>
+            <el-input
+              v-model="queryDocContent"
+              placeholder="输入文档内容后回车"
+              @keyup.enter.native="getDocByParam"
+            ></el-input>
           </el-tooltip>
         </div>
         <el-button size="medium" type="primary" @click="openUpload">导入文件</el-button>
@@ -210,6 +230,8 @@ export default class DocList extends Vue {
   private treeOptions: any[] = []; // 树下拉选项
   private treeId: string = ""; // 选中的树id
   private queryDocContent: string = ""; // 模糊查询文档内容
+  private purpose: string = ""; // 用途
+  private purposeOption: any[] = []; // 用途下拉框
 
   private docContent(val: any) {
     if (val.content.length > 20) {
@@ -243,7 +265,14 @@ export default class DocList extends Vue {
     this.loading = true;
     // 根据条件查询文档
     this.annotationAPI
-      .getDocByParam(this.moduleId, this.statusCode, this.queryDocContent, this.page - 1, this.size)
+      .getDocByParam(
+        this.moduleId,
+        this.statusCode,
+        this.purpose,
+        this.queryDocContent,
+        this.page - 1,
+        this.size
+      )
       .then(({ data }) => {
         this.total = data.totalElements;
         this.tableData = data.content;
@@ -268,7 +297,21 @@ export default class DocList extends Vue {
     // 选择模块，获取文档和树
     this.page = 1;
     this.getDocByParam();
+    this.getPurposeOptions(val);
     this.getTrees(val);
+  }
+
+  private getPurposeOptions(moduleId: string) {
+    // 获取用途下拉框
+    this.annotationAPI.getPurpose(moduleId).then(({ data }) => {
+      this.purposeOption = data;
+    });
+  }
+
+  private selectPurpose() {
+    // 选择用途，获取文档
+    this.page = 1;
+    this.getDocByParam();
   }
 
   private getTrees(moduleId: string) {

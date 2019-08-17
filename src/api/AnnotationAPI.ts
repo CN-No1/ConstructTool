@@ -8,13 +8,17 @@ interface AnnotationAPI {
 
     getDocById(id: string): Promise<any>;
 
-    getDocByParam(moduleId: string, status: string, docContent: string, page: number, size: number): Promise<any>;
+    getDocByParam(
+        moduleId: string, status: string, purpose: string,
+        docContent: string, page: number, size: number): Promise<any>;
 
     createNLUDoc(doc: NLUEntity): Promise<any>;
 
     deleteNLUDoc(id: string): Promise<any>;
 
     parseJson(uploadObj: any): Promise<any>;
+
+    getPurpose(moduleId: any): Promise<any>;
 }
 
 export default AnnotationAPI;

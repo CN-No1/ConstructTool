@@ -7,7 +7,7 @@
 import { Component, Vue, Prop } from "vue-property-decorator";
 import Layout from "./components/layout/Layout.vue";
 @Component({
-  components: { Layout },
+  components: { Layout }
 })
 export default class AppMain extends Vue {}
 </script>

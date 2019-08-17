@@ -5,7 +5,7 @@
         <el-option v-for="item in modules" :key="item.id" :label="item.name" :value="item.id"></el-option>
       </el-select>
       <el-popover ref="popover" placement="bottom" width="160" trigger="manual" v-model="propVisible">
-        <el-input ref="newNode" v-model="newNode" @keyup.enter.native="addTopNode"></el-input>
+        <el-input ref="newNode" v-model="newNode" @keyup.enter.native="addTopNode" placeholder="回车键快速添加"></el-input>
         <div style="text-align: right; margin: 0;padding-top:5px;">
           <el-button size="mini" type="danger" @click="closePop">取消</el-button>
           <el-button type="primary" size="mini" @click="addTopNode">确定</el-button>
