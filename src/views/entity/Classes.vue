@@ -27,6 +27,7 @@
     <el-row>
       <el-col :span="8" v-loading="loading">
         <el-tree
+          :key="mainKey"
           :data="entityClass"
           node-key="id"
           default-expand-all
@@ -56,8 +57,8 @@
           </span>
         </el-tree>
       </el-col>
-      <el-col :span="16" v-show="formVisible" class="node-form">
-        <!-- <el-col :span="16" v-show="formVisible" class="node-form"> -->
+      <el-col :span="14" v-show="formVisible" class="node-form">
+        <!-- <el-col :span="14" v-show="formVisible" class="node-form"> -->
         <div class="node-name">
           <span>节点名称:</span>
           <el-input
@@ -148,6 +149,7 @@ import EntityAPIImpl from "@/api/impl/EntityAPIImpl";
 import { getUUID } from "@/util/uuid";
 import EntityClassNode, { PropRow } from "@/api/model/EntityClassModel";
 import { NestedToFlat, FlatToNested } from "@/util/tranformTreeData";
+import { getNowFormatDate } from "@/util/common";
 import { saveAs } from "file-saver";
 
 @Component({})
@@ -183,7 +185,7 @@ export default class Entity extends Vue {
     // 获取本体图数据
     this.loading = true;
     this.entityAPI.getClass(this.treeId).then(({ data }) => {
-      this.entityClass = data;
+      this.entityClass = FlatToNested(data);
       this.loading = false;
     });
   }
@@ -404,9 +406,9 @@ export default class Entity extends Vue {
       type: "warning"
     })
       .then(() => {
-        const data = NestedToFlat(this.entityClass, this.treeId);
+        const data = this.entityClass;
         const blob = new Blob([JSON.stringify(data)], { type: "" });
-        saveAs(blob, "data.json");
+        saveAs(blob, "data" + getNowFormatDate() + ".json");
         this.$message({
           type: "success",
           message: "导出成功!"

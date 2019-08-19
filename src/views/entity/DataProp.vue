@@ -44,7 +44,7 @@
           </span>
         </el-tree>
       </el-col>
-      <el-col :span="16" v-show="formVisible" class="node-form">
+      <el-col :span="14" v-show="formVisible" class="node-form">
         <div class="node-name">
           <p>节点名称:</p>
           <el-input
