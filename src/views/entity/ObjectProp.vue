@@ -1,6 +1,10 @@
 <template>
   <div class="header" @click="closePop">
     <div>
+      <div style="padding: 10px;">
+        当前本体树：
+        <el-tag>{{treeName}}</el-tag>
+      </div>
       <el-popover
         ref="popover"
         placement="bottom"
@@ -8,7 +12,12 @@
         trigger="manual"
         v-model="propVisible"
       >
-        <el-input ref="newNode" v-model="newNode" @keyup.enter.native="addTopNode" placeholder="回车键快速添加"></el-input>
+        <el-input
+          ref="newNode"
+          v-model="newNode"
+          @keyup.enter.native="addTopNode"
+          placeholder="回车键快速添加"
+        ></el-input>
         <div style="text-align: right; margin: 0;padding-top:5px;">
           <el-button size="mini" type="danger" @click="closePop">取消</el-button>
           <el-button type="primary" size="mini" @click="addTopNode">确定</el-button>
@@ -27,6 +36,7 @@
           :expand-on-click-node="false"
           :highlight-current="true"
           @node-click="handleClick"
+          @node-drop="nodeDrop"
           draggable
         >
           <span class="custom-tree-node" slot-scope="{ node, data }">
@@ -109,6 +119,7 @@ import { FlatToNested } from "@/util/tranformTreeData";
 
 @Component({ components: { Treeselect } })
 export default class ObjectProp extends Vue {
+  private treeName: string = ""; // 本体树名字
   private formVisible: boolean = false; // 右侧表单是否显示
   private objectProp: ObjectPropModel = new ObjectPropModel();
   private entityList: any[] = []; // 实体类树
@@ -128,6 +139,7 @@ export default class ObjectProp extends Vue {
   private mounted() {
     // 初始化
     this.objectProp.treeId = this.$route.params.treeId;
+    this.treeName = this.$route.params.treeName;
     this.getObjectProp();
     this.getEntityList();
   }
@@ -274,7 +286,7 @@ export default class ObjectProp extends Vue {
   private goBack() {
     // 返回列表页
     this.$router.push({
-      name: "moduleList",
+      name: "treeList",
       params: { moduleChecked: this.$route.params.moduleChecked }
     });
   }
@@ -303,6 +315,11 @@ export default class ObjectProp extends Vue {
     } else {
       next();
     }
+  }
+
+  private nodeDrop() {
+    // 拖动节点
+    this.doneEdit = true;
   }
 }
 </script>

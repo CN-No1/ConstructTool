@@ -1,6 +1,8 @@
 <template>
   <div class="header">
-    <el-button :icon="iconClass" @click="chnageCollapse" style="border: none;width:66px;"></el-button>
+    <el-button @click="chnageCollapse" style="border: none;width:66px;">
+      <i class="iconfont" v-html="iconClass"></i>
+    </el-button>
     <div class="nav">
       <breadcrumb></breadcrumb>
     </div>
@@ -29,7 +31,7 @@ import Breadcrumb from "./Breadcrumb.vue";
 export default class PublicHeader extends Vue {
   private isCollapse: boolean = false;
   get iconClass() {
-    return this.isCollapse ? "el-icon-d-arrow-right" : "el-icon-d-arrow-left";
+    return this.isCollapse ? "&#xe68d;" : "&#xe63e;";
   }
   private chnageCollapse() {
     this.isCollapse = !this.isCollapse;

@@ -1,7 +1,7 @@
 <template>
   <div v-loading="uploading" element-loading-text="导入中，请稍后">
-    <div class="header">
-      <div>
+    <div>
+      <div style="margin-bottom: 20px;">
         <el-tooltip class="item" effect="dark" content="所属领域" placement="top-start">
           <el-select
             v-model="moduleId"
@@ -42,13 +42,14 @@
           <el-tooltip class="item" effect="dark" content="模糊查询" placement="top-start">
             <el-input
               v-model="queryDocContent"
-              placeholder="输入文档内容后回车"
+              placeholder="输入语料内容后回车"
               @keyup.enter.native="getDocByParam"
             ></el-input>
           </el-tooltip>
         </div>
         <el-button size="medium" type="primary" @click="openUpload">导入文件</el-button>
         <div style="float: right;">
+          当前本体树：
           <el-select
             v-model="treeId"
             placeholder="请选择本体树"
@@ -80,7 +81,7 @@
           v-loading="loading"
           @row-click="clickRow"
         >
-          <el-table-column prop="content" label="文章内容" :formatter="docContent" align="center"></el-table-column>
+          <el-table-column prop="content" label="语料内容" :formatter="docContent" align="center"></el-table-column>
           <el-table-column prop="moduleName" label="用途" align="center">
             <template slot-scope="scope">
               <el-tag close-transition>{{scope.row.purpose}}</el-tag>
@@ -167,6 +168,7 @@
         action="/api/annotation/parseJson"
         ref="upload"
         :data="uploadForm"
+        :on-error="uploadError"
         :on-success="uploadSuccess"
         :on-progress="uploadProcess"
         :before-upload="beforeUpload"
@@ -415,6 +417,15 @@ export default class DocList extends Vue {
     this.getDocByParam();
   }
 
+  private uploadError() {
+    // 文件上传失败
+    this.$message({
+      type: "error",
+      message: "服务器异常"
+    });
+    this.uploading = false;
+  }
+
   private uploadProcess(event: any) {
     // 上传进度
     if (event.percent === 100) {
@@ -433,6 +444,33 @@ export default class DocList extends Vue {
     } else {
       this.$message.error("请填写完整！");
       return false;
+    }
+  }
+
+  private beforeRouteLeave(to: any, from: any, next: () => void) {
+    // 离开页面前保存
+    const ref = this.$refs.annotator as any;
+    if (ref.doneEdit) {
+      this.$confirm(
+        "检测到未保存的内容，是否在离开页面前保存修改？",
+        "确认信息",
+        {
+          distinguishCancelAndClose: true,
+          confirmButtonText: "保存",
+          cancelButtonText: "放弃修改"
+        }
+      )
+        .then(() => {
+          ref.saveAll();
+          next();
+        })
+        .catch((action: any) => {
+          if (action === "cancel") {
+            next();
+          }
+        });
+    } else {
+      next();
     }
   }
 }

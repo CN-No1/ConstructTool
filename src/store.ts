@@ -9,10 +9,6 @@ Vue.use(Vuex);
 class VuexStore extends VuexModule {
   public foo: number = 111;
 
-  get axles() {
-    return this.foo / 2;
-  }
-
   @Action({ commit: "MutationMeth" })
   public ActionMeth() {
     return 8;

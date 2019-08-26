@@ -28,6 +28,12 @@ export default new Router({
           component: () => import("./views/entity/ModuleList.vue"),
         },
         {
+          path: "treeList",
+          name: "treeList",
+          meta: { menuName: "本体树", iconClass: "", style: "display:none" },
+          component: () => import("./views/entity/TreeList.vue"),
+        },
+        {
           path: "classes",
           name: "classes",
           meta: { menuName: "本体图", iconClass: "", style: "display:none" },
@@ -38,12 +44,6 @@ export default new Router({
           name: "objectProp",
           meta: { menuName: "事件关系", iconClass: "", style: "display:none" },
           component: () => import("./views/entity/ObjectProp.vue"),
-        },
-        {
-          path: "dataProp",
-          name: "dataProp",
-          meta: { menuName: "事件属性", iconClass: "", style: "display:none" },
-          component: () => import("./views/entity/DataProp.vue"),
         },
         {
           path: "dataType",

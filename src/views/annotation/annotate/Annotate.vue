@@ -21,7 +21,7 @@
           :searchable="true"
           :sort-value-by="sortValueBy"
           :flat="true"
-          noOptionsText="请先选择本体树"
+          noOptionsText="本体树未选择或本体树中无数据"
           placeholder="请选择文本所属实体"
         />
         <span slot="footer" class="dialog-footer">

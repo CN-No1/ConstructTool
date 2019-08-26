@@ -1,30 +1,47 @@
 <template>
   <div class="header" @click="closePop">
     <div>
-      <el-popover
-        ref="popover"
-        placement="bottom"
-        width="160"
-        trigger="manual"
-        v-model="propVisible"
-      >
-        <el-input
-          ref="newNode"
-          v-model="newNode"
-          @keyup.enter.native="addTopNode"
-          placeholder="回车键快速添加"
-        ></el-input>
-        <div style="text-align: right; margin: 0;padding-top:5px;">
-          <el-button size="mini" type="danger" @click="closePop">取消</el-button>
-          <el-button type="primary" size="mini" @click="addTopNode">确定</el-button>
-        </div>
-        <el-button slot="reference" @click.stop="showPop" type="primary">新增顶层节点</el-button>
-      </el-popover>
-      <el-button type="success" @click="save">保存</el-button>
-      <el-button type="info" @click="goBack">返回</el-button>
-      <el-button type="text" @click="output" style="float:right;">导出数据</el-button>
+      <div style="padding: 10px;">
+        当前本体树：
+        <el-tag>{{treeName}}</el-tag>
+      </div>
+      <div style="display:flex;">
+        <el-popover
+          ref="popover"
+          placement="bottom"
+          width="160"
+          trigger="manual"
+          v-model="propVisible"
+        >
+          <el-input
+            ref="newNode"
+            v-model="newNode"
+            @keyup.enter.native="addTopNode"
+            placeholder="回车键快速添加"
+          ></el-input>
+          <div style="text-align: right; margin: 0;padding-top:5px;">
+            <el-button size="mini" type="danger" @click="closePop">取消</el-button>
+            <el-button type="primary" size="mini" @click="addTopNode">确定</el-button>
+          </div>
+          <el-button slot="reference" @click.stop="showPop" type="primary">新增顶层节点</el-button>
+        </el-popover>
+        <el-button type="success" @click="save">保存</el-button>
+        <el-button type="info" @click="goBack">返回</el-button>
+        <el-button type="text" @click="output" style="margin-right: 10px;">导出数据</el-button>
+        <el-upload
+          action="/api/entity/parseJson"
+          ref="upload"
+          :show-file-list="false"
+          :data="{treeId:treeId}"
+          :on-error="uploadError"
+          :on-success="uploadSuccess"
+          :on-progress="uploadProcess"
+        >
+          <el-button slot="trigger" type="text">导入数据</el-button>
+        </el-upload>
+      </div>
     </div>
-    <el-row>
+    <el-row v-loading="uploading" element-loading-text="导入中，请稍后">
       <el-col :span="8" v-loading="loading">
         <el-tree
           :key="mainKey"
@@ -34,6 +51,7 @@
           :expand-on-click-node="false"
           :highlight-current="true"
           @node-click="handleClick"
+          @node-drop="nodeDrop"
           draggable
         >
           <span class="custom-tree-node" slot-scope="{ node, data }">
@@ -91,8 +109,16 @@
                       @close="handleTagClose(row,tag)"
                     >{{tag}}</el-tag>
                   </div>
-                  <div>
+                  <div style="display: flex; align-items: center;">
                     <el-input v-model="tagVal" @keyup.enter.native="addTag(row)"></el-input>
+                    <el-tooltip
+                      class="item"
+                      effect="dark"
+                      content="键入后回车生成一个枚举标签"
+                      placement="right"
+                    >
+                      <i class="iconfont">&#xe60a;</i>
+                    </el-tooltip>
                   </div>
                 </div>
                 <!-- 日期类型 -->
@@ -154,7 +180,8 @@ import { saveAs } from "file-saver";
 
 @Component({})
 export default class Entity extends Vue {
-  private treeId: string = "";
+  private treeId: string = ""; // 本体书id
+  private treeName: string = ""; // 本体树名字
   private formVisible: boolean = false; // 右侧表单是否显示
   private entityClass: EntityClassNode[] = [];
   private node: EntityClassNode = new EntityClassNode(); // 节点临时对象，用于动态修改树节点展示
@@ -166,6 +193,7 @@ export default class Entity extends Vue {
   private dataTypeOption: any[] = []; // 数据类型列表
   private tagVal: string = ""; // 枚举型输入框
   private mainKey: number = 0; // 强制刷新组件
+  private uploading: boolean = false; // 导入文件loading
 
   private propValFmt(val: string) {
     if (val === "") {
@@ -177,6 +205,7 @@ export default class Entity extends Vue {
   private mounted() {
     // 初始化
     this.treeId = this.$route.params.treeId;
+    this.treeName = this.$route.params.treeName;
     this.getTreeData();
     this.getDataType();
   }
@@ -393,7 +422,7 @@ export default class Entity extends Vue {
   private goBack() {
     // 返回列表页
     this.$router.push({
-      name: "moduleList",
+      name: "treeList",
       params: { moduleChecked: this.$route.params.moduleChecked }
     });
   }
@@ -447,6 +476,37 @@ export default class Entity extends Vue {
       next();
     }
   }
+
+  private nodeDrop() {
+    // 拖动节点
+    this.doneEdit = true;
+  }
+
+  private uploadSuccess() {
+    // 上传成功钩子
+    this.$message({
+      type: "success",
+      message: "导入成功"
+    });
+    this.uploading = false;
+    this.getTreeData();
+  }
+
+  private uploadError() {
+    // 文件上传失败
+    this.$message({
+      type: "error",
+      message: "服务器异常"
+    });
+    this.uploading = false;
+  }
+
+  private uploadProcess(event: any) {
+    // 上传进度
+    if (event.percent === 100) {
+      this.uploading = true;
+    }
+  }
 }
 </script>
 
@@ -458,9 +518,5 @@ export default class Entity extends Vue {
     display: block;
     margin-block-end: 15px;
   }
-}
-.tags {
-  border: 1px solid #f9f9f9;
-  border-radius: 5px;
 }
 </style>
