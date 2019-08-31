@@ -5,6 +5,7 @@ class NLUEntity {
     public content?: string;
     public hashCode?: number;
     public annotationList!: Annotation[];
+    public intention?: any[];
 }
 
 export interface Annotation {

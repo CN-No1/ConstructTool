@@ -37,12 +37,8 @@ class AnnotationAPIImpl extends BaseAPI implements AnnotationAPI {
         return await this.instance.delete("deleteNLUDoc?id=" + id);
     }
 
-    public async parseJson(uploadObj: any): Promise<any> {
-        return await this.instance.post("parseJson", JSON.stringify(uploadObj));
-    }
-
-    public async getPurpose(moduleId: any): Promise<any> {
-        return await this.instance.get("getPurpose?moduleId=" + moduleId);
+    public async getPurpose(): Promise<any> {
+        return await this.instance.get("getPurpose");
     }
 }
 

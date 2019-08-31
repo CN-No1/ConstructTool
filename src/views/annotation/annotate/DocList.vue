@@ -28,13 +28,12 @@
             placeholder="请选择用途"
             @change="selectPurpose"
             :disabled="loading"
-            no-data-text="请先选择具体领域"
           >
             <el-option
               v-for="item in purposeOption"
-              :key="item.id"
-              :label="item.name"
-              :value="item.name"
+              :key="item"
+              :label="item"
+              :value="item"
             ></el-option>
           </el-select>
         </el-tooltip>
@@ -81,7 +80,7 @@
           v-loading="loading"
           @row-click="clickRow"
         >
-          <el-table-column prop="content" label="语料内容" :formatter="docContent" align="center"></el-table-column>
+          <el-table-column width="500px" prop="content" label="语料内容" :formatter="docContent" align="center"></el-table-column>
           <el-table-column prop="moduleName" label="用途" align="center">
             <template slot-scope="scope">
               <el-tag close-transition>{{scope.row.purpose}}</el-tag>
@@ -146,7 +145,12 @@
       </el-col>
       <el-col :span="12" class="edit-area">
         <div v-show="isEdit" class="edit-form">
-          <annotate ref="annotator" :editDoc="editDoc" :treeId="treeId" @doneSave="doneSave"></annotate>
+          <annotate
+            ref="annotator"
+            :editDoc="editDoc"
+            :treeId="treeId"
+            @doneSave="doneSave"
+          ></annotate>
         </div>
         <div v-show="!isEdit" class="tips">
           <span>请点击一行进行编辑</span>
@@ -253,6 +257,7 @@ export default class DocList extends Vue {
   private mounted() {
     this.getModule();
     this.getDocByParam();
+    this.getPurposeOptions();
   }
 
   private getModule() {
@@ -299,13 +304,12 @@ export default class DocList extends Vue {
     // 选择模块，获取文档和树
     this.page = 1;
     this.getDocByParam();
-    this.getPurposeOptions(val);
     this.getTrees(val);
   }
 
-  private getPurposeOptions(moduleId: string) {
-    // 获取用途下拉框
-    this.annotationAPI.getPurpose(moduleId).then(({ data }) => {
+  private getPurposeOptions() {
+    // 获取用途下拉框, 获取意图树
+    this.annotationAPI.getPurpose().then(({ data }) => {
       this.purposeOption = data;
     });
   }

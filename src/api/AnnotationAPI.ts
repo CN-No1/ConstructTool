@@ -16,9 +16,8 @@ interface AnnotationAPI {
 
     deleteNLUDoc(id: string): Promise<any>;
 
-    parseJson(uploadObj: any): Promise<any>;
+    getPurpose(): Promise<any>;
 
-    getPurpose(moduleId: any): Promise<any>;
 }
 
 export default AnnotationAPI;

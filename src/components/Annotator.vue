@@ -63,7 +63,7 @@ export default class Annotator extends Vue {
 
   get markStyle() {
     // 标志样式
-    return "color:red;cursor:pointer;";
+    return "color:red;cursor:pointer;text-decoration:underline;padding:0 2px;";
   }
 
   private creatPosition(start: any, end: any) {

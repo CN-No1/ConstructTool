@@ -45,6 +45,21 @@
         </el-table-column>
       </el-table>
     </el-form-item>
+    <el-form-item label="意图：">
+      <div style="line-height: 25px;">
+        <treeselect
+          v-model="doc.intention"
+          valueFormat="object"
+          :multiple="true"
+          :options="intentionList"
+          :searchable="true"
+          :sort-value-by="sortValueBy"
+          :flat="true"
+          placeholder="请选择意图"
+          noOptionsText="模块未选择或模块下无意图树"
+        />
+      </div>
+    </el-form-item>
     <el-form-item>
       <el-button type="success" @click="saveAll()">保存</el-button>
       <!-- <el-button @click="prev()">上一个</el-button>
@@ -75,7 +90,7 @@ export default class Annotate extends Vue {
   @Prop()
   private treeId!: string;
 
-  private doc: NLUEntity = { content: "", annotationList: [] }; //  文档对象
+  private doc: NLUEntity = { content: "", annotationList: [], intention: [] }; //  文档对象
   private annotation = new AnnotationModel();
   private dialogVisible: boolean = false; // 对话框显示
   private text: string = ""; // 选中文本
@@ -87,6 +102,7 @@ export default class Annotate extends Vue {
   private doneEdit: boolean = false; // 页面是否有修改
   private seletedWord: boolean = false; // 是否选中一个单词
   private loading: boolean = true;
+  private intentionList: any[] = []; // 意图树
 
   @Watch("editDoc", { immediate: true })
   private docChange(newVal: any, oldVal: any) {
@@ -94,6 +110,14 @@ export default class Annotate extends Vue {
     this.init();
     this.loading = false;
     // this.getEntityList();
+    this.entityAPI.getTree(newVal.moduleId, "1").then((res: any) => {
+      // 获取意图树
+      if (res.data.length !== 0) {
+        this.entityAPI.getClass(res.data[0].id).then(({ data }) => {
+          this.intentionList = FlatToNested(data);
+        });
+      }
+    });
   }
 
   @Watch("treeId", { immediate: true, deep: true })

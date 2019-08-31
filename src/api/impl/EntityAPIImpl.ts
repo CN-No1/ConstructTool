@@ -5,6 +5,7 @@ import DataPropModel from "../model/DataPropModel";
 import ObjectPropModel from "../model/ObjectPropModel";
 import DataTypeModel from "../model/DataTypeModel";
 import ModuleModel from "../model/ModuleModel";
+import TreeType from "../model/TreeType";
 
 class EntityAPIImpl extends BaseAPI implements EntityAPI {
 
@@ -21,8 +22,10 @@ class EntityAPIImpl extends BaseAPI implements EntityAPI {
         return await this.instance.get("getModule");
     }
 
-    public async getTree(moduleId: string): Promise<any> {
-        return await this.instance.get("getTree?id=" + moduleId);
+    public async getTree(moduleId: string, treeType?: string): Promise<any> {
+        let request = "getTree?moduleId=" + moduleId;
+        if (treeType) { request = request.concat("&treeType=" + treeType); }
+        return await this.instance.get(request);
     }
 
     public async getDataProp(treeId: string): Promise<any> {
@@ -72,6 +75,18 @@ class EntityAPIImpl extends BaseAPI implements EntityAPI {
     }
     public async deleteTree(id: string): Promise<any> {
         return await this.instance.delete("deleteTree?id=" + id);
+    }
+
+    public async getTreeType(): Promise<any> {
+        return await this.instance.get("getTreeType");
+    }
+
+    public async createTreeType(treeType: TreeType): Promise<any> {
+        return await this.instance.post("createTreeType", JSON.stringify(treeType));
+    }
+
+    public async deleteTreeType(id: string): Promise<any> {
+        return await this.instance.delete("deleteTreeType?id=" + id);
     }
 
 }

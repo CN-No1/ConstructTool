@@ -66,6 +66,12 @@ export default new Router({
           meta: { menuName: "NLU", iconClass: "" },
           component: () => import("./views/annotation/annotate/DocList.vue"),
         },
+        {
+          path: "instance",
+          name: "instance",
+          meta: { menuName: "实例图", iconClass: "" },
+          component: () => import("./views/annotation/instanceGraph/instance.vue"),
+        },
         // {
         //   path: "docList-admin",
         //   name: "docList-admin",
