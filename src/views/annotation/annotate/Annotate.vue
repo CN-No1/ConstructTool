@@ -1,6 +1,23 @@
 <template>
   <el-form ref="form" label-width="180px" v-loading="loading">
     <el-form-item label="标注问题：">
+      <div style="float:right;">
+        <el-tooltip
+          class="item"
+          effect="dark"
+          content="跳转到实例创建"
+          placement="top-start"
+          align="center"
+        >
+          <el-button
+            size="mini"
+            type="warning"
+            circle
+            icon="el-icon-s-promotion"
+            @click="gotoInstance"
+          ></el-button>
+        </el-tooltip>
+      </div>
       <annotator
         ref="annotator"
         :doc="doc.content"
@@ -90,7 +107,7 @@ export default class Annotate extends Vue {
   @Prop()
   private treeId!: string;
 
-  private doc: NLUEntity = { content: "", annotationList: [], intention: [] }; //  文档对象
+  private doc: any = { content: "", annotationList: [], intention: [] }; //  文档对象
   private annotation = new AnnotationModel();
   private dialogVisible: boolean = false; // 对话框显示
   private text: string = ""; // 选中文本
@@ -234,6 +251,11 @@ export default class Annotate extends Vue {
         });
       }
     });
+  }
+
+  private gotoInstance() {
+    // 跳转到实例创建页面
+    this.$emit("gotoInstance");
   }
 
   private next() {

@@ -29,12 +29,7 @@
             @change="selectPurpose"
             :disabled="loading"
           >
-            <el-option
-              v-for="item in purposeOption"
-              :key="item"
-              :label="item"
-              :value="item"
-            ></el-option>
+            <el-option v-for="item in purposeOption" :key="item" :label="item" :value="item"></el-option>
           </el-select>
         </el-tooltip>
         <div style="display: inline-block;">
@@ -42,7 +37,9 @@
             <el-input
               v-model="queryDocContent"
               placeholder="输入语料内容后回车"
+              clearable
               @keyup.enter.native="getDocByParam"
+              @input="getDocByParam"
             ></el-input>
           </el-tooltip>
         </div>
@@ -70,7 +67,7 @@
         <el-button type="success" @click="creatDoc">新增</el-button>
       </div>-->
     </div>
-    <el-row type="flex">
+    <el-row type="flex" style="min-height: 768px;">
       <el-col :span="12">
         <el-table
           :data="tableData"
@@ -80,7 +77,13 @@
           v-loading="loading"
           @row-click="clickRow"
         >
-          <el-table-column width="500px" prop="content" label="语料内容" :formatter="docContent" align="center"></el-table-column>
+          <el-table-column
+            width="500px"
+            prop="content"
+            label="语料内容"
+            :formatter="docContent"
+            align="center"
+          ></el-table-column>
           <el-table-column prop="moduleName" label="用途" align="center">
             <template slot-scope="scope">
               <el-tag close-transition>{{scope.row.purpose}}</el-tag>
@@ -150,6 +153,7 @@
             :editDoc="editDoc"
             :treeId="treeId"
             @doneSave="doneSave"
+            @gotoInstance="gotoInstance"
           ></annotate>
         </div>
         <div v-show="!isEdit" class="tips">
@@ -222,7 +226,7 @@ export default class DocList extends Vue {
   private total: number = 100; // 总条数
   private loading = false; // 表格loading
   private isEdit = false; // 是否在编辑状态
-  private editDoc = new NLUEntity(); // 编辑中文档对象
+  private editDoc: any = new NLUEntity(); // 编辑中文档对象
   // private dialogVisible: boolean = false; // 对话框
   // private textarea: string = ""; // 新增文档内容
   private annotationAPI = new AnnotationAPIImpl();
@@ -255,6 +259,9 @@ export default class DocList extends Vue {
   }
 
   private mounted() {
+    if (this.$route.params.docName) {
+      this.queryDocContent = this.$route.params.docName;
+    }
     this.getModule();
     this.getDocByParam();
     this.getPurposeOptions();
@@ -281,6 +288,7 @@ export default class DocList extends Vue {
         this.size
       )
       .then(({ data }) => {
+        this.isEdit = data.content.length !== 0;
         this.total = data.totalElements;
         this.tableData = data.content;
         this.loading = false;
@@ -349,19 +357,16 @@ export default class DocList extends Vue {
         .then(() => {
           ref.saveAll();
           this.getDocByParam();
-          this.editDoc = row;
-          this.isEdit = true;
         })
         .catch((action: any) => {
           if (action === "cancel") {
-            this.editDoc = row;
-            this.isEdit = true;
+            return;
           }
         });
-    } else {
-      this.editDoc = row;
-      this.isEdit = true;
     }
+    this.editDoc = row;
+    this.isEdit = true;
+    this.getTrees(row.moduleId);
   }
 
   private doneSave() {
@@ -449,6 +454,14 @@ export default class DocList extends Vue {
       this.$message.error("请填写完整！");
       return false;
     }
+  }
+
+  private gotoInstance() {
+    // 跳转创建实例页面
+    this.$router.push({
+      name: "instance",
+      params: { docName: this.editDoc.content }
+    });
   }
 
   private beforeRouteLeave(to: any, from: any, next: () => void) {

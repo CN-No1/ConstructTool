@@ -27,13 +27,15 @@
             <el-input
               v-model="queryDocContent"
               placeholder="输入语料内容后回车"
+              clearable
               @keyup.enter.native="getDocByParam"
+              @input="getDocByParam"
             ></el-input>
           </el-tooltip>
         </div>
       </div>
     </div>
-    <el-row type="flex">
+    <el-row type="flex" style="min-height: 768px;">
       <el-col :span="12">
         <el-table
           :data="tableData"
@@ -92,6 +94,70 @@
         <div v-if="isEdit" class="edit-form" v-loading="formLoading">
           <el-form ref="form" label-width="100px">
             <el-form-item label="语料内容">
+              <div style="float:right;">
+                <el-tooltip
+                  class="item"
+                  effect="dark"
+                  content="新建实例"
+                  placement="top-start"
+                  align="center"
+                >
+                  <el-button
+                    size="mini"
+                    type="primary"
+                    circle
+                    icon="el-icon-plus"
+                    @click="createInstance"
+                  ></el-button>
+                </el-tooltip>
+                <el-tooltip
+                  v-if="editDoc.status!='2'"
+                  class="item"
+                  effect="dark"
+                  content="将此条数据设为失效"
+                  placement="top-start"
+                  align="center"
+                >
+                  <el-button
+                    size="mini"
+                    type="danger"
+                    circle
+                    icon="el-icon-close"
+                    @click="disableInstance()"
+                  ></el-button>
+                </el-tooltip>
+                <el-tooltip
+                  v-if="editDoc.status==='2'"
+                  class="item"
+                  effect="dark"
+                  content="将此条数据设为有效"
+                  placement="top-start"
+                  align="center"
+                >
+                  <el-button
+                    size="mini"
+                    type="success"
+                    circle
+                    icon="el-icon-check"
+                    @click="enableInstance()"
+                  ></el-button>
+                </el-tooltip>
+                <el-tooltip
+                  class="item"
+                  effect="dark"
+                  content="跳转到NLU标注"
+                  placement="top-start"
+                  align="center"
+                >
+                  <el-button
+                    size="mini"
+                    type="warning"
+                    circle
+                    icon="el-icon-s-promotion"
+                    @click="gotoNLU"
+                  ></el-button>
+                </el-tooltip>
+              </div>
               <annotator
                 ref="annotator"
                 :doc="editDoc.text"
@@ -101,6 +167,11 @@
             <el-form-item label="编辑实例">
               <template>
                 <el-form ref="form" label-width="100px">
+                  <el-form-item label="实例名" class="coreThing">
+                    <div style="width: 350px;margin-right: auto;">
+                      <el-input v-model="instance.instanceName"></el-input>
+                    </div>
+                  </el-form-item>
                   <el-form-item label="事件中心" class="coreThing">
                     <treeselect
                       v-model="instance.domain"
@@ -172,7 +243,16 @@
             </el-form-item>
             <el-form-item label="已创建实例">
               <template>
-                <el-tag v-for="item in editDoc.instanceList" :key="item.domain">{{item.domain}}</el-tag>
+                <div style="padding-left:30px;">
+                  <el-tag
+                    v-for="(item,index) in editDoc.instanceList"
+                    :key="item.domain"
+                    @click="showInstanceDetail(item)"
+                    style="cursor: pointer;margin-right:10px;"
+                    closable
+                    @close="deleteInstance(index)"
+                  >{{item.instanceName}}</el-tag>
+                </div>
               </template>
             </el-form-item>
           </el-form>
@@ -212,6 +292,10 @@ export default class Instance extends Vue {
     {
       id: "1",
       name: "已标注"
+    },
+    {
+      id: "2",
+      name: "已失效"
     }
   ];
   private moduleId: string = ""; // 领域Id
@@ -231,7 +315,7 @@ export default class Instance extends Vue {
   private popoverVisible: boolean = false; // 确认框是否出现
   private domainList: any[] = []; // 中心树
   private relList: any[] = []; // 关系树
-  private instance: any = { domain: null, rangeList: [] }; // 编辑对象
+  private instance: any = { instanceName: "", domain: null, rangeList: [] }; // 编辑对象
 
   private docContent(val: any) {
     if (val.text.length > 20) {
@@ -251,6 +335,9 @@ export default class Instance extends Vue {
   }
 
   private mounted() {
+    if (this.$route.params.docName) {
+      this.queryDocContent = this.$route.params.docName;
+    }
     this.getModule();
     this.getDocByParam();
   }
@@ -275,10 +362,11 @@ export default class Instance extends Vue {
         this.size
       )
       .then(({ data }) => {
+        this.isEdit = data.content.length !== 0;
         this.total = data.totalElements;
         this.tableData = data.content;
         this.loading = false;
-        this.editDoc = data.content[0];
+        this.clickRow(data.content[0]);
       });
   }
 
@@ -336,20 +424,20 @@ export default class Instance extends Vue {
       })
         .then(() => {
           this.getDocByParam();
-          this.isEdit = true;
+          this.saveInstance();
         })
         .catch((action: any) => {
           if (action === "cancel") {
-            this.isEdit = true;
+            return;
           }
         });
-    } else {
-      this.isEdit = true;
     }
+    this.isEdit = true;
     this.editDoc = row;
     this.getTreeByType(row.moduleId, "2"); // 中心树
     this.getTreeByType(row.moduleId, "3"); // 关系树
     if (row.instanceList.length === 0) {
+      this.instance.instanceName = "实例1";
       this.instance.rangeList = [];
       row.annotationList.forEach((item: any) => {
         const range = {
@@ -361,13 +449,11 @@ export default class Instance extends Vue {
         this.instance.rangeList.push(range);
       });
     } else {
-      this.instance = row.instanceList[0];
+      this.instance = Object.assign(this.instance, row.instanceList[0]);
+      this.instance.rangeList.sort((a: any, b: any) => {
+        return b.status - a.status;
+      });
     }
-  }
-
-  private addNode() {
-    // 新增节点
-    this.popoverVisible = false;
   }
 
   private selectRelation(row: any) {
@@ -377,6 +463,45 @@ export default class Instance extends Vue {
     } else {
       row.status = false;
     }
+  }
+
+  private showInstanceDetail(instance: any) {
+    // 编辑实例
+    this.instance = Object.assign(this.instance, instance);
+  }
+
+  private createInstance() {
+    // 新增实例
+    this.$confirm("是否保存当前实例？", "确认信息", {
+      distinguishCancelAndClose: true,
+      confirmButtonText: "保存",
+      cancelButtonText: "不保存"
+    })
+      .then(() => {
+        this.saveInstance();
+        this.initInstance();
+      })
+      .catch(() => {
+        // 不保存
+        this.initInstance();
+      });
+  }
+
+  private initInstance() {
+    // 初始化实例对象
+    const index = this.editDoc.instanceList.length + 1;
+    this.instance.instanceName = "实例" + index.toString();
+    this.instance.domain = null;
+    this.instance.rangeList = [];
+    this.editDoc.annotationList.forEach((item: any) => {
+      const range = {
+        content: item.value,
+        relation: null,
+        role: item.entity,
+        status: false
+      };
+      this.instance.rangeList.push(range);
+    });
   }
 
   private saveInstance() {
@@ -393,13 +518,70 @@ export default class Instance extends Vue {
       }
     });
     if (flag) {
-      this.editDoc.instanceList.push(this.instance);
+      let temp: any = {};
+      temp = Object.assign(temp, this.instance);
+      this.editDoc.instanceList.push(temp);
     }
     this.instanceAPI.updateInstance(this.editDoc).then((res: any) => {
       this.$message({
         type: "success",
         message: "保存成功"
       });
+      this.getDocByParam();
+    });
+  }
+
+  private deleteInstance(index: any) {
+    // 删除实例
+    this.$confirm("是否删除当前实例？", "确认信息", {
+      distinguishCancelAndClose: true,
+      confirmButtonText: "删除",
+      cancelButtonText: "取消"
+    })
+      .then(() => {
+        this.editDoc.instanceList.splice(index, 1);
+        this.instanceAPI.updateInstance(this.editDoc).then((res: any) => {
+          this.$message({
+            type: "success",
+            message: "删除成功"
+          });
+          this.initInstance();
+        });
+      })
+      .catch(() => {
+        // 不保存
+      });
+  }
+
+  private gotoNLU() {
+    // 跳转到NLU页面
+    this.$router.push({
+      name: "docList",
+      params: { docName: this.editDoc.text }
+    });
+  }
+
+  private disableInstance() {
+    // 设置失效状态
+    this.editDoc.status = "2";
+    this.instanceAPI.updateInstance(this.editDoc).then((res: any) => {
+      this.$message({
+        type: "success",
+        message: "设置成功"
+      });
+      this.getDocByParam();
+    });
+  }
+
+  private enableInstance() {
+    // 设置生效状态
+    this.editDoc.status = "0";
+    this.instanceAPI.updateInstance(this.editDoc).then((res: any) => {
+      this.$message({
+        type: "success",
+        message: "设置成功"
+      });
+      this.getDocByParam();
     });
   }
 

@@ -9,6 +9,7 @@ class InstanceObject {
 }
 
 export interface Instance {
+    instanceName?: string;
     domain?: string;
     rangeList?: Range[];
 }
