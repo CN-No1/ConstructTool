@@ -8,18 +8,23 @@
 }
 
 .header {
-    &>div:first-child {
-        position: fixed;
-        top: 80px;
-    }
+    // &>div:first-child {
+    //     position: fixed;
+    //     top: 80px;
+    //     z-index: 99999;
+    //     background: white;
+    // }
     &>.el-row {
-        margin-top: 100px;
+        margin-top: 20px;
     }
 }
 
 .node-form {
+    overflow-y: scroll;
+    height: 700px;
     position: fixed;
     right: 0;
+    top: 70px;
 }
 
 .node-name {

@@ -24,7 +24,6 @@
         </div>
         <el-button slot="reference" @click.stop="showPop" type="primary">新增顶层节点</el-button>
       </el-popover>
-      <el-button type="success" @click="save">保存</el-button>
       <el-button type="info" @click="goBack">返回</el-button>
     </div>
     <el-row>
@@ -100,6 +99,7 @@
             icon="el-icon-delete"
           ></el-button>
         </div>
+        <el-button type="success" @click="save" style="margin-top:30px;">保存</el-button>
       </el-col>
     </el-row>
   </div>
@@ -240,6 +240,10 @@ export default class ObjectProp extends Vue {
 
   private addTopNode() {
     // 新增顶层节点
+    if (this.newNode === "") {
+      this.$message.error("禁止添加空节点!");
+      return;
+    }
     const node: ObjectPropNode = {
       id: getUUID(),
       label: this.newNode,
@@ -247,7 +251,6 @@ export default class ObjectProp extends Vue {
     };
     this.objectProp.objectPropList.unshift(node);
     this.doneEdit = true;
-    this.propVisible = false;
     this.newNode = "";
   }
 

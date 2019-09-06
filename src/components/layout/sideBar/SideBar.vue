@@ -10,6 +10,16 @@
       style="height:100%;"
     >
       <side-bar-item v-for="(item, index) in sideMenu" :key="index" :item="item"></side-bar-item>
+      <div style="position: absolute; bottom: 0;" v-if="!isCollapse">
+        <a
+          target="_blank"
+          href="http://www.beian.gov.cn/portal/registerSystemInfo?recordcode=32011402010504"
+          style="display: inline-block; text-decoration: none; height: 20px;
+          line-height: 20px; color: white; font-size: 10px; text-align: center;"
+        >
+          <p>苏公网安备 32011402010504号</p>
+        </a>
+      </div>
     </el-menu>
   </section>
 </template>
@@ -18,7 +28,7 @@
 import { Vue, Component, Prop, Inject, Watch } from "vue-property-decorator";
 import SideBarItem from "./SideBarItem.vue";
 @Component({
-  components: { SideBarItem },
+  components: { SideBarItem }
 })
 export default class SideBar extends Vue {
   @Prop(Boolean)

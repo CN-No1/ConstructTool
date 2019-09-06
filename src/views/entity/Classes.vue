@@ -25,7 +25,6 @@
           </div>
           <el-button slot="reference" @click.stop="showPop" type="primary">新增顶层节点</el-button>
         </el-popover>
-        <el-button type="success" @click="save">保存</el-button>
         <el-button type="info" @click="goBack">返回</el-button>
         <el-button type="text" @click="output" style="margin-right: 10px;">导出数据</el-button>
         <el-upload
@@ -76,7 +75,6 @@
         </el-tree>
       </el-col>
       <el-col :span="14" v-show="formVisible" class="node-form">
-        <!-- <el-col :span="14" v-show="formVisible" class="node-form"> -->
         <div class="node-name">
           <span>节点名称:</span>
           <el-input
@@ -93,15 +91,47 @@
                 <el-input v-model="row.propName"></el-input>
               </template>
             </el-table-column>
-            <el-table-column label="属性值">
-              <template slot-scope="{row}">
+            <el-table-column label="数据类型">
+              <template slot-scope="{ row, column, $index }">
+                <el-select v-model="row.propType" @change="selectType(row, $index)">
+                  <el-option
+                    v-for="item in dataTypeOption"
+                    :key="item.id"
+                    :label="item.label"
+                    :value="item.id"
+                  ></el-option>
+                </el-select>
+              </template>
+            </el-table-column>
+            <el-table-column label="属性值" width="450px;">
+              <template slot-scope="{ row, column, $index }">
                 <!-- 文本类型 -->
                 <el-input v-if="row.propType==='5d50d8210b5f5a20f86a86ec'" v-model="row.propVal"></el-input>
                 <!-- 数字类型 -->
-                <el-input v-if="row.propType==='5d50d8210b5f5a20f86a86eb'" v-model="row.propVal"></el-input>
+                <div v-if="row.propType==='5d50d8210b5f5a20f86a86eb'" :key="mainKey">
+                  <div style="display: flex; align-items: center;">
+                    <el-input v-model="block[$index]" @blur="NumberValidate(row,$index)"></el-input>
+                    <el-tooltip
+                      class="item"
+                      effect="dark"
+                      content="开头结尾必须为英文()或英文[]，最大值最小值用英文,隔开，约定--代表负无穷，++代表正无穷。"
+                      placement="top-end"
+                    >
+                      <i class="iconfont">&#xe60a;</i>
+                    </el-tooltip>
+                    <el-tooltip class="item" effect="dark" content="单位" placement="top-end">
+                      <el-input
+                        v-model="unit[$index]"
+                        style="width:200px;"
+                        @blur="NumberValidate(row,$index)"
+                      ></el-input>
+                    </el-tooltip>
+                  </div>
+                  <div v-if="row.regTest" style="color:red;">填写有误，请根据规则填写！</div>
+                </div>
                 <!-- 枚举类型 -->
-                <div class="tags" v-if="row.propType==='5d50d8210b5f5a20f86a86ea'" :key="mainKey">
-                  <div>
+                <div class="tags" v-if="row.propType==='5d50d8210b5f5a20f86a86ea'">
+                  <div :key="mainKey">
                     <el-tag
                       v-for="tag in row.tags"
                       :key="tag"
@@ -110,7 +140,11 @@
                     >{{tag}}</el-tag>
                   </div>
                   <div style="display: flex; align-items: center;">
-                    <el-input v-model="tagVal" @keyup.enter.native="addTag(row)"></el-input>
+                    <el-input
+                      :ref="'input'+$index"
+                      v-model="tagVal[$index]"
+                      @keyup.enter.native="addTag(row,$index)"
+                    ></el-input>
                     <el-tooltip
                       class="item"
                       effect="dark"
@@ -123,18 +157,6 @@
                 </div>
                 <!-- 日期类型 -->
                 <span v-if="row.propType==='5d50d8210b5f5a20f86a86e9'">不需要输入</span>
-              </template>
-            </el-table-column>
-            <el-table-column label="数据类型">
-              <template slot-scope="{row}">
-                <el-select v-model="row.propType" @change="selectType(row)">
-                  <el-option
-                    v-for="item in dataTypeOption"
-                    :key="item.id"
-                    :label="item.label"
-                    :value="item.id"
-                  ></el-option>
-                </el-select>
               </template>
             </el-table-column>
             <el-table-column label="操作">
@@ -164,6 +186,7 @@
             @focus="inputFocus($event)"
           ></el-input>
         </div>
+        <el-button type="success" @click="save" style="margin-top: 30px;">保存</el-button>
       </el-col>
     </el-row>
   </div>
@@ -191,15 +214,26 @@ export default class Entity extends Vue {
   private propVisible: boolean = false; // 弹出框是否显示
   private newNode: string = ""; // 新增节点名
   private dataTypeOption: any[] = []; // 数据类型列表
-  private tagVal: string = ""; // 枚举型输入框
+  private tagVal: any[] = []; // 枚举型输入框
+  private block: any[] = []; // 数字型区间输入框
+  private unit: any[] = []; // 数字型单位输入框
   private mainKey: number = 0; // 强制刷新组件
   private uploading: boolean = false; // 导入文件loading
 
-  private propValFmt(val: string) {
-    if (val === "") {
-      return [];
-    }
-    return val.split(",");
+  private NumberValidate(row: any, index: any) {
+    // 验证数字类型区间输入是否合法
+    // 替换所有中文括号
+    this.block[index] = this.block[index]
+      .replace(/（/g, "(")
+      .replace(/）/g, ")")
+      .replace(/【/g, "[")
+      .replace(/】/g, "]")
+      .replace(/，/g, ",");
+    // 开头结尾必须为英文()或英文[]，最大值最小值用英文,隔开，约定--代表负无穷，++代表正无穷。
+    const reg = /^(\(|\[)(\-|\+)*\d*%?,(\-|\+)*\d*%?(\)|\])$/;
+    row.regTest = !reg.test(this.block[index]);
+    ++this.mainKey;
+    row.propVal = this.block[index] + "&" + this.unit[index];
   }
 
   private mounted() {
@@ -228,6 +262,20 @@ export default class Entity extends Vue {
 
   private handleClick(data: any) {
     // 点击节点编辑
+    let index = 0;
+    data.propList.map((item: any) => {
+      if (item.propType === "5d50d8210b5f5a20f86a86ea") {
+        // 枚举型需转换为数组
+        item.tags = item.propVal.split(",");
+        this.tagVal[index] = "";
+      } else if (item.propType === "5d50d8210b5f5a20f86a86eb") {
+        // 数值型需拼接单位
+        const tempArr = item.propVal.split("&");
+        this.block[index] = tempArr[0];
+        this.unit[index] = tempArr[1];
+      }
+      index++;
+    });
     this.node = data;
     this.formVisible = true;
     const input = this.$refs.nodeName as any;
@@ -319,6 +367,10 @@ export default class Entity extends Vue {
 
   private addTopNode() {
     // 新增顶层节点
+    if (this.newNode === "") {
+      this.$message.error("禁止添加空节点!");
+      return;
+    }
     const node: EntityClassNode = {
       id: getUUID(),
       label: this.newNode,
@@ -328,7 +380,6 @@ export default class Entity extends Vue {
     };
     this.entityClass.unshift(node);
     this.doneEdit = true;
-    this.propVisible = false;
     this.newNode = "";
   }
 
@@ -371,30 +422,40 @@ export default class Entity extends Vue {
       });
   }
 
-  private selectType(item: any) {
+  private selectType(item: any, index: any) {
     // 选择数据类型(枚举型需要array)
     if (item.propType === "5d50d8210b5f5a20f86a86ea") {
       item.tags = [];
+      this.tagVal[index] = "";
+    } else if (item.propType === "5d50d8210b5f5a20f86a86eb") {
+      // 数值类型需要单位
+      this.block[index] = "";
+      this.unit[index] = "";
     }
+    item.propVal = "";
   }
 
-  private addTag(row: any) {
+  private addTag(row: any, index: any) {
     // 添加枚举
-    if (this.tagVal === "") {
+    if (this.tagVal[index] === "") {
       this.$message.error("请不要添加空值！");
       return;
     }
-    if (row.tags.includes(this.tagVal)) {
+    if (row.tags.includes(this.tagVal[index])) {
       this.$message.error("请不要添加重复的值！");
       return;
     }
     if (row.propVal !== "") {
-      row.propVal = row.propVal.concat("," + this.tagVal);
+      row.propVal = row.propVal.concat("," + this.tagVal[index]);
     } else {
-      row.propVal = this.tagVal;
+      row.propVal = this.tagVal[index];
     }
-    this.tagVal = "";
+    this.tagVal[index] = "";
     row.tags = row.propVal.split(",");
+    const inputRef = "input" + index;
+    const input = this.$refs[inputRef] as any;
+    input.focus();
+    ++this.mainKey;
   }
 
   private handleTagClose(row: any, tag: any) {
@@ -406,8 +467,22 @@ export default class Entity extends Vue {
 
   private save() {
     // 保存实体树
-    this.loading = true;
     const flatData = NestedToFlat(this.entityClass, this.treeId);
+    let flag = false; // 检查是否有填写错误的地方
+    flatData.forEach((item: any) => {
+      item.propList.forEach((element: any) => {
+        if (element.regTest) {
+          flag = true;
+          this.$message.error("还有填写错误的地方！");
+          this.handleClick(item);
+          return;
+        }
+      });
+    });
+    if (flag) {
+      return;
+    }
+    this.loading = true;
     this.entityAPI.creatOrUpdateClass(flatData).then(({ data }) => {
       this.loading = false;
       this.doneEdit = false;

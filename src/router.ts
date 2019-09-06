@@ -73,6 +73,12 @@ export default new Router({
           component: () => import("./views/annotation/instanceGraph/instance.vue"),
         },
         // {
+        //   path: "instanceGraph",
+        //   name: "instanceGraph",
+        //   meta: { menuName: "实例图", iconClass: "" },
+        //   component: () => import("./views/annotation/instanceGraph/instanceGraph.vue"),
+        // },
+        // {
         //   path: "docList-admin",
         //   name: "docList-admin",
         //   meta: { menuName: "管理员界面", iconClass: "", style: "display:none" },

@@ -46,7 +46,7 @@
           @row-click="clickRow"
         >
           <el-table-column label="语料内容" :formatter="docContent" align="center"></el-table-column>
-          <el-table-column prop label="标注状态" :formatter="statusFmt" align="center">
+          <el-table-column prop label="标注状态" align="center">
             <template slot-scope="scope">
               <el-tooltip
                 class="item"
@@ -322,16 +322,6 @@ export default class Instance extends Vue {
       return val.text.substr(0, 20).concat("...");
     }
     return val.text;
-  }
-  private statusFmt(val: any) {
-    switch (val.status) {
-      case "0":
-        return "未标注";
-      case "1":
-        return "已标注";
-      case "2":
-        return "无效";
-    }
   }
 
   private mounted() {
