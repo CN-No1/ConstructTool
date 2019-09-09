@@ -167,12 +167,12 @@
             <el-form-item label="编辑实例">
               <template>
                 <el-form ref="form" label-width="100px">
-                  <el-form-item label="实例名" class="coreThing">
+                  <el-form-item label="实例图名" class="coreThing">
                     <div style="width: 350px;margin-right: auto;">
                       <el-input v-model="instance.instanceName"></el-input>
                     </div>
                   </el-form-item>
-                  <el-form-item label="事件中心" class="coreThing">
+                  <el-form-item label="中心名称" class="coreThing">
                     <treeselect
                       v-model="instance.domain"
                       :multiple="false"
@@ -185,19 +185,19 @@
                       noOptionsText="具体模块未选择或此模块下未设置中心树"
                     />
                   </el-form-item>
-                  <el-form-item label="创建关系" class="relTreeCell">
+                  <el-form-item label="角色标注" class="relTreeCell">
                     <el-table
                       :data="instance.rangeList"
                       style="width: 100%"
                       max-height="450"
                       cell-class-name="intanceCell"
                     >
-                      <el-table-column label="词" align="center">
+                      <el-table-column label="词汇" align="center">
                         <template slot-scope="{row}">
                           <span>{{row.content}}</span>
                         </template>
                       </el-table-column>
-                      <el-table-column label="关系" align="center" width="250">
+                      <el-table-column label="角色" align="center" width="250">
                         <template slot-scope="{row}">
                           <treeselect
                             v-model="row.relation"
@@ -214,7 +214,7 @@
                           />
                         </template>
                       </el-table-column>
-                      <el-table-column label="角色" align="center">
+                      <el-table-column label="实体" align="center">
                         <template slot-scope="{row}">
                           <span>{{row.role}}</span>
                         </template>
@@ -356,7 +356,9 @@ export default class Instance extends Vue {
         this.total = data.totalElements;
         this.tableData = data.content;
         this.loading = false;
-        this.clickRow(data.content[0]);
+        if (this.isEdit) {
+          this.clickRow(data.content[0]);
+        }
       });
   }
 
@@ -428,6 +430,7 @@ export default class Instance extends Vue {
     this.getTreeByType(row.moduleId, "3"); // 关系树
     if (row.instanceList.length === 0) {
       this.instance.instanceName = "实例1";
+      this.instance.domain = null;
       this.instance.rangeList = [];
       row.annotationList.forEach((item: any) => {
         const range = {
@@ -517,7 +520,6 @@ export default class Instance extends Vue {
         type: "success",
         message: "保存成功"
       });
-      this.getDocByParam();
     });
   }
 
@@ -641,5 +643,8 @@ export default class Instance extends Vue {
   & > div {
     overflow: inherit !important;
   }
+}
+.edit-form {
+  position: fixed;
 }
 </style>

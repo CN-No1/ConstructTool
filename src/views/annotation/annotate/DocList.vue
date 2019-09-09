@@ -520,4 +520,7 @@ export default class DocList extends Vue {
     font-size: 28px;
   }
 }
+.edit-form {
+  position: fixed;
+}
 </style>

@@ -24,6 +24,7 @@
         </div>
         <el-button slot="reference" @click.stop="showPop" type="primary">新增顶层节点</el-button>
       </el-popover>
+      <el-button type="success" @click="save">保存</el-button>
       <el-button type="info" @click="goBack">返回</el-button>
     </div>
     <el-row>
@@ -138,8 +139,8 @@ export default class ObjectProp extends Vue {
 
   private mounted() {
     // 初始化
-    this.objectProp.treeId = this.$route.params.treeId;
-    this.treeName = this.$route.params.treeName;
+    this.objectProp.treeId = this.$route.query.treeId as string;
+    this.treeName = this.$route.query.treeName as string;
     this.getObjectProp();
     this.getEntityList();
   }
@@ -288,10 +289,11 @@ export default class ObjectProp extends Vue {
 
   private goBack() {
     // 返回列表页
-    this.$router.push({
-      name: "treeList",
-      params: { moduleChecked: this.$route.params.moduleChecked }
-    });
+    // this.$router.push({
+    //   name: "treeList",
+    //   query: { moduleChecked: this.$route.query.moduleChecked }
+    // });
+    this.$router.go(-1);
   }
 
   private beforeRouteLeave(to: any, from: any, next: () => void) {

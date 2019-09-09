@@ -25,6 +25,7 @@
           </div>
           <el-button slot="reference" @click.stop="showPop" type="primary">新增顶层节点</el-button>
         </el-popover>
+        <el-button type="success" @click="save">保存</el-button>
         <el-button type="info" @click="goBack">返回</el-button>
         <el-button type="text" @click="output" style="margin-right: 10px;">导出数据</el-button>
         <el-upload
@@ -238,8 +239,8 @@ export default class Entity extends Vue {
 
   private mounted() {
     // 初始化
-    this.treeId = this.$route.params.treeId;
-    this.treeName = this.$route.params.treeName;
+    this.treeId = this.$route.query.treeId as string;
+    this.treeName = this.$route.query.treeName as string;
     this.getTreeData();
     this.getDataType();
   }
@@ -334,16 +335,20 @@ export default class Entity extends Vue {
       type: "warning"
     })
       .then(() => {
-        this.entityAPI.deleteClass(data.id).then(() => {
-          const parent = node.parent;
-          const children = parent.data.children || parent.data;
-          const index = children.findIndex((d: any) => d.id === data.id);
-          children.splice(index, 1);
-          this.formVisible = false;
-          this.$message({
-            type: "success",
-            message: "删除成功!"
-          });
+        this.entityAPI.deleteClass(data.id).then((res: any) => {
+          if (res.code !== 0) {
+            return;
+          } else {
+            const parent = node.parent;
+            const children = parent.data.children || parent.data;
+            const index = children.findIndex((d: any) => d.id === data.id);
+            children.splice(index, 1);
+            this.formVisible = false;
+            this.$message({
+              type: "success",
+              message: "删除成功!"
+            });
+          }
         });
       })
       .catch(() => {
@@ -496,10 +501,11 @@ export default class Entity extends Vue {
 
   private goBack() {
     // 返回列表页
-    this.$router.push({
-      name: "treeList",
-      params: { moduleChecked: this.$route.params.moduleChecked }
-    });
+    // this.$router.push({
+    //   name: "treeList",
+    //   query: { moduleChecked: this.$route.query.moduleChecked }
+    // });
+    this.$router.go(-1);
   }
 
   private output() {

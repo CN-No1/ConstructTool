@@ -1,6 +1,6 @@
 <template>
-  <el-form ref="form" label-width="180px" v-loading="loading">
-    <el-form-item label="标注问题：">
+  <el-form ref="form" label-width="100px" v-loading="loading">
+    <el-form-item label="语料内容">
       <div style="float:right;">
         <el-tooltip
           class="item"
@@ -27,8 +27,8 @@
         @showDetail="showDetail"
       ></annotator>
     </el-form-item>
-    <el-form-item label="标记词汇 | 属性：">
-      <div class="annotator" v-if="seletedWord">
+    <el-form-item label="实体标注">
+      <div class="annotator" v-if="seletedWord" style="padding-left:30px;">
         <b style="color:red;">{{text}}</b>
         <treeselect
           v-model="entityArr"
@@ -46,24 +46,26 @@
         </span>
       </div>
     </el-form-item>
-    <el-form-item label="已标注：">
-      <el-table
-        :data="doc.annotationList"
-        style="width: 100%"
-        :header-cell-style="rowStyle"
-        :row-style="rowStyle"
-      >
-        <el-table-column prop="value" label="文本" width="180"></el-table-column>
-        <el-table-column prop="entity" label="关联实体" width="180"></el-table-column>
-        <el-table-column label="操作">
-          <template slot-scope="scope">
-            <el-button type="danger" icon="el-icon-delete" circle @click="deleteRow(scope.row)"></el-button>
-          </template>
-        </el-table-column>
-      </el-table>
+    <el-form-item label="已标注">
+      <div style="padding-left:30px;">
+        <el-table
+          :data="doc.annotationList"
+          style="width: 100%"
+          :header-cell-style="rowStyle"
+          :row-style="rowStyle"
+        >
+          <el-table-column prop="value" label="文本" width="180"></el-table-column>
+          <el-table-column prop="entity" label="关联实体" width="180"></el-table-column>
+          <el-table-column label="操作">
+            <template slot-scope="scope">
+              <el-button type="danger" icon="el-icon-delete" circle @click="deleteRow(scope.row)"></el-button>
+            </template>
+          </el-table-column>
+        </el-table>
+      </div>
     </el-form-item>
-    <el-form-item label="意图：">
-      <div style="line-height: 25px;">
+    <el-form-item label="意图">
+      <div style="line-height: 25px;padding-left:30px;">
         <treeselect
           v-model="doc.intention"
           valueFormat="object"
@@ -78,7 +80,7 @@
       </div>
     </el-form-item>
     <el-form-item>
-      <el-button type="success" @click="saveAll()">保存</el-button>
+      <el-button type="success" @click="saveAll()" style="margin-left:30px;">保存</el-button>
       <!-- <el-button @click="prev()">上一个</el-button>
       <el-button @click="next()">下一个</el-button>-->
     </el-form-item>

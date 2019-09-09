@@ -40,12 +40,7 @@
         </el-col>
       </el-row>
     </div>
-    <el-dialog
-      title="新增模块"
-      :visible.sync="dialogVisible"
-      width="30%"
-      :before-close="handleClose"
-    >
+    <el-dialog title="新增模块" :visible.sync="dialogVisible" width="30%" :before-close="handleClose">
       <el-form label-width="80px" @submit.native.prevent>
         <el-form-item label="名称">
           <el-input v-model="newName"></el-input>
@@ -166,7 +161,7 @@ export default class ModuleList extends Vue {
   private showTreeList(i: any) {
     // 查看领域树列表
     this.showTable = true;
-    this.$router.push({ name: "treeList", params: { moduleChecked: i } });
+    this.$router.push({ name: "treeList", query: { moduleChecked: JSON.stringify(i) } });
   }
 
   private handleClose() {
@@ -174,7 +169,6 @@ export default class ModuleList extends Vue {
     this.newName = "";
     this.dialogVisible = false;
   }
-
 }
 </script>
 

@@ -34,8 +34,8 @@
                 <el-input
                   v-if="editable[scope.$index]"
                   v-model="scope.row.name"
-                  style="width:20%;"
-                  @blur="saveTreeChange(scope)"
+                  style="width:50%;"
+                  @blur="saveTreeNameChange(scope)"
                 ></el-input>
               </el-tooltip>
               <el-tooltip class="item" effect="dark" content="双击来修改树的名字" placement="top">
@@ -143,10 +143,8 @@ export default class TreeList extends Vue {
 
   private mounted() {
     // 初始化
-    if (this.$route.params.moduleChecked) {
-      this.moduleChecked = this.$route.params.moduleChecked;
-      this.getTree();
-    }
+    this.moduleChecked = JSON.parse(this.$route.query.moduleChecked as string);
+    this.getTree();
     this.getTreeType();
   }
 
@@ -190,8 +188,6 @@ export default class TreeList extends Vue {
 
   private saveTreeChange(scope: any) {
     // 保存对树的修改
-    ++this.mainKey;
-    this.editable[scope.$index] = false;
     const temp = scope.row;
     if (
       temp.treeType === "1" ||
@@ -220,9 +216,6 @@ export default class TreeList extends Vue {
           )
             .then(() => {
               item.treeType = "0";
-              this.api.createOrUpdateTree(item).then(({ code }) => {
-                // todo
-              });
               this.api.createOrUpdateTree(temp).then(({ code }) => {
                 this.$message({
                   type: "success",
@@ -250,6 +243,18 @@ export default class TreeList extends Vue {
     // 编辑树的名字
     ++this.mainKey;
     this.editable[index] = true;
+  }
+
+  private saveTreeNameChange(scope: any) {
+    // 修改树名
+    ++this.mainKey;
+    this.editable[scope.$index] = false;
+    this.api.createOrUpdateTree(scope.row).then(({ code }) => {
+      this.$message({
+        type: "success",
+        message: "修改成功!"
+      });
+    });
   }
 
   private deleteTree(id: string) {
@@ -288,7 +293,7 @@ export default class TreeList extends Vue {
     // 编辑关系
     this.$router.push({
       name: "objectProp",
-      params: {
+      query: {
         treeId: row.id,
         moduleChecked: this.moduleChecked,
         treeName: row.name
@@ -300,7 +305,7 @@ export default class TreeList extends Vue {
     // 编辑实体
     this.$router.push({
       name: "classes",
-      params: {
+      query: {
         treeId: row.id,
         moduleChecked: this.moduleChecked,
         treeName: row.name
@@ -310,7 +315,8 @@ export default class TreeList extends Vue {
 
   private goBack() {
     // 返回列表页
-    this.$router.push({ name: "moduleList" });
+    // this.$router.push({ name: "moduleList" });
+    this.$router.go(-1);
   }
 
   private deleteTreeType(id: string) {
