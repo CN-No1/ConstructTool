@@ -20,8 +20,12 @@
                   v-if="!item.editMode"
                 >{{item.name}}</span>
               </el-tooltip>
-              <el-tooltip class="item" effect="dark" content="点击其他地方完成修改" placement="top">
-                <el-input v-model="item.name" @blur="saveModuleChange(item)" v-if="item.editMode"></el-input>
+              <el-tooltip class="item" effect="dark" content="回车完成修改" placement="top">
+                <el-input
+                  v-model="item.name"
+                  @keyup.enter.native="saveModuleChange(item)"
+                  v-if="item.editMode"
+                ></el-input>
               </el-tooltip>
               <div class="bottom clearfix">
                 <el-collapse v-model="activeNames">
@@ -161,7 +165,10 @@ export default class ModuleList extends Vue {
   private showTreeList(i: any) {
     // 查看领域树列表
     this.showTable = true;
-    this.$router.push({ name: "treeList", query: { moduleChecked: JSON.stringify(i) } });
+    this.$router.push({
+      name: "treeList",
+      query: { moduleChecked: JSON.stringify(i) }
+    });
   }
 
   private handleClose() {

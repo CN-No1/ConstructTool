@@ -4,3 +4,5 @@ declare module '*.vue' {
 }
 
 declare module "@riophae/vue-treeselect"
+
+declare module "relation-chart"

@@ -33,6 +33,7 @@
             ></el-input>
           </el-tooltip>
         </div>
+        <el-button size="medium" type="primary" @click="locate">定位</el-button>
       </div>
     </div>
     <el-row type="flex" style="min-height: 768px;">
@@ -43,6 +44,7 @@
           stripe
           style="width: 100%"
           v-loading="loading"
+          highlight-current-row
           @row-click="clickRow"
         >
           <el-table-column label="语料内容" :formatter="docContent" align="center"></el-table-column>
@@ -69,7 +71,7 @@
               <el-tooltip
                 class="item"
                 effect="dark"
-                content="已失效"
+                content="无法标注"
                 placement="top-start"
                 align="center"
               >
@@ -78,7 +80,7 @@
             </template>
           </el-table-column>
         </el-table>
-        <div class="pagenation">
+        <div class="pagenation" :key="mainKey">
           <el-pagination
             @size-change="handleSizeChange"
             @current-change="handleCurrentChange"
@@ -114,7 +116,7 @@
                   v-if="editDoc.status!='2'"
                   class="item"
                   effect="dark"
-                  content="将此条数据设为失效"
+                  content="将此条数据设为无法标注"
                   placement="top-start"
                   align="center"
                 >
@@ -122,15 +124,16 @@
                     size="mini"
                     type="danger"
                     circle
-                    icon="el-icon-close"
+                    icon="el-icon-minus"
                     @click="disableInstance()"
+                    style="transform: rotate(45deg);"
                   ></el-button>
                 </el-tooltip>
                 <el-tooltip
                   v-if="editDoc.status==='2'"
                   class="item"
                   effect="dark"
-                  content="将此条数据设为有效"
+                  content="将此条数据恢复为可标注"
                   placement="top-start"
                   align="center"
                 >
@@ -157,6 +160,20 @@
                     @click="gotoNLU"
                   ></el-button>
                 </el-tooltip>
+                <el-tooltip
+                  class="item"
+                  effect="dark"
+                  content="刷新关系树"
+                  placement="top-start"
+                  align="center"
+                >
+                  <el-button
+                    size="mini"
+                    circle
+                    icon="el-icon-refresh-left"
+                    @click="getTreeByType(editDoc.moduleId,'3')"
+                  ></el-button>
+                </el-tooltip>
               </div>
               <annotator
                 ref="annotator"
@@ -169,7 +186,7 @@
                 <el-form ref="form" label-width="100px">
                   <el-form-item label="实例图名" class="coreThing">
                     <div style="width: 350px;margin-right: auto;">
-                      <el-input v-model="instance.instanceName"></el-input>
+                      <el-input v-model="instance.instanceName" @change="setEdit" readonly></el-input>
                     </div>
                   </el-form-item>
                   <el-form-item label="中心名称" class="coreThing">
@@ -183,6 +200,7 @@
                       :searchable="true"
                       placeholder="请选择事件中心"
                       noOptionsText="具体模块未选择或此模块下未设置中心树"
+                      @input="setEdit"
                     />
                   </el-form-item>
                   <el-form-item label="角色标注" class="relTreeCell">
@@ -237,6 +255,11 @@
                       type="primary"
                       @click="saveInstance"
                     >保存</el-button>
+                    <el-button
+                      style="float:right; margin-top:10px;"
+                      plain
+                      @click="previewGraph"
+                    >实例图预览</el-button>
                   </el-form-item>
                 </el-form>
               </template>
@@ -256,6 +279,21 @@
               </template>
             </el-form-item>
           </el-form>
+          <div class="dialog-wrapper">
+            <el-dialog
+              title="实例图"
+              :visible.sync="instanceGraphVisible"
+              width="30%"
+              :before-close="handleClose"
+              fullscreen
+            >
+              <div
+                id="instanceGraph"
+                ref="instanceGraph"
+                style="width: 1280px;height: 760px;margin: auto;"
+              ></div>
+            </el-dialog>
+          </div>
         </div>
         <div v-if="!isEdit" class="tips">
           <span>请点击一行进行编辑</span>
@@ -275,6 +313,7 @@ import InstanceAPIImpl from "../../../api/impl/InstanceAPIImpl";
 import EntityAPIImpl from "@/api/impl/EntityAPIImpl";
 import Annotator from "@/components/Annotator.vue";
 import { FlatToNested } from "@/util/tranformTreeData";
+import RelationChart from "relation-chart";
 
 @Component({ components: { Annotator, Treeselect } })
 export default class Instance extends Vue {
@@ -295,7 +334,7 @@ export default class Instance extends Vue {
     },
     {
       id: "2",
-      name: "已失效"
+      name: "无法标注"
     }
   ];
   private moduleId: string = ""; // 领域Id
@@ -311,11 +350,15 @@ export default class Instance extends Vue {
   private entityAPI = new EntityAPIImpl();
   private queryDocContent: string = ""; // 模糊查询文档内容
   private doneEdit: boolean = false; // 是否有修改
-  private editText: string = ""; // 选中的文字
   private popoverVisible: boolean = false; // 确认框是否出现
   private domainList: any[] = []; // 中心树
   private relList: any[] = []; // 关系树
   private instance: any = { instanceName: "", domain: null, rangeList: [] }; // 编辑对象
+  private instanceEdit: boolean = false; // 实例是否有修改
+  private hashCode: number = 0; // 用于精确查询
+  private mainKey: number = 0; // 强制重新渲染组件
+  private instanceGraphData: any = { nodes: [], links: [] };
+  private instanceGraphVisible: boolean = false; // 实例图预览
 
   private docContent(val: any) {
     if (val.text.length > 20) {
@@ -325,8 +368,8 @@ export default class Instance extends Vue {
   }
 
   private mounted() {
-    if (this.$route.params.docName) {
-      this.queryDocContent = this.$route.params.docName;
+    if (this.$route.params.hashCode) {
+      this.hashCode = this.$route.params.hashCode as any;
     }
     this.getModule();
     this.getDocByParam();
@@ -340,6 +383,15 @@ export default class Instance extends Vue {
     });
   }
 
+  private locate() {
+    // 定位到上次编辑的位置
+    // 获取localStroage值
+    this.hashCode = 0;
+    this.page = Number(localStorage.getItem("instancePageNum"));
+    ++this.mainKey;
+    this.getDocByParam();
+  }
+
   private getDocByParam() {
     this.loading = true;
     // 根据条件查询文档
@@ -348,6 +400,7 @@ export default class Instance extends Vue {
         this.moduleId,
         this.statusCode,
         this.queryDocContent,
+        this.hashCode,
         this.page - 1,
         this.size
       )
@@ -372,6 +425,9 @@ export default class Instance extends Vue {
     // 翻页
     this.page = val;
     this.getDocByParam();
+    // 设置localStroage值
+    localStorage.setItem("instancePageNum", this.page.toString());
+    this.getDocByParam();
   }
 
   private selectModule(val: any) {
@@ -381,7 +437,7 @@ export default class Instance extends Vue {
   }
 
   private getTreeByType(moduleId: string, type: string) {
-    // 获取中心树数据
+    // 获取中心树,关系树数据
     this.formLoading = true;
     this.entityAPI.getTree(moduleId, type).then((res: any) => {
       if (res.data.length !== 0) {
@@ -447,6 +503,7 @@ export default class Instance extends Vue {
         return b.status - a.status;
       });
     }
+    this.instanceEdit = false;
   }
 
   private selectRelation(row: any) {
@@ -456,28 +513,51 @@ export default class Instance extends Vue {
     } else {
       row.status = false;
     }
+    this.instanceEdit = true;
   }
 
   private showInstanceDetail(instance: any) {
     // 编辑实例
     this.instance = Object.assign(this.instance, instance);
+    this.instanceEdit = false;
+  }
+
+  private previewGraph() {
+    // 预览实例图
+    this.instanceGraphVisible = true;
+    this.createInstanceGraph(this.instance);
+  }
+
+  private handleClose() {
+    // 关闭对话框前清空svg
+    const dom = document.getElementById("instanceGraph") as any;
+    dom.innerText = "";
+    this.instanceGraphVisible = false;
   }
 
   private createInstance() {
     // 新增实例
-    this.$confirm("是否保存当前实例？", "确认信息", {
-      distinguishCancelAndClose: true,
-      confirmButtonText: "保存",
-      cancelButtonText: "不保存"
-    })
-      .then(() => {
-        this.saveInstance();
-        this.initInstance();
+    if (this.instanceEdit) {
+      this.$confirm("是否保存当前实例？", "确认信息", {
+        distinguishCancelAndClose: true,
+        confirmButtonText: "保存",
+        cancelButtonText: "不保存"
       })
-      .catch(() => {
-        // 不保存
-        this.initInstance();
-      });
+        .then(() => {
+          this.saveInstance();
+        })
+        .catch(() => {
+          // 不保存
+          this.initInstance();
+        });
+    } else {
+      this.initInstance();
+    }
+  }
+
+  private setEdit() {
+    // 实例内容有变化
+    this.instanceEdit = true;
   }
 
   private initInstance() {
@@ -520,6 +600,20 @@ export default class Instance extends Vue {
         type: "success",
         message: "保存成功"
       });
+      this.instanceAPI
+        .getDocByParam(
+          this.moduleId,
+          this.statusCode,
+          this.queryDocContent,
+          this.hashCode,
+          this.page - 1,
+          this.size
+        )
+        .then(({ data }) => {
+          this.tableData = data.content;
+        });
+      this.initInstance();
+      this.instanceEdit = false;
     });
   }
 
@@ -538,6 +632,8 @@ export default class Instance extends Vue {
             message: "删除成功"
           });
           this.initInstance();
+          this.getDocByParam();
+          this.clickRow(this.editDoc);
         });
       })
       .catch(() => {
@@ -549,7 +645,7 @@ export default class Instance extends Vue {
     // 跳转到NLU页面
     this.$router.push({
       name: "docList",
-      params: { docName: this.editDoc.text }
+      params: { hashCode: this.editDoc.hashCode }
     });
   }
 
@@ -562,6 +658,7 @@ export default class Instance extends Vue {
         message: "设置成功"
       });
       this.getDocByParam();
+      this.clickRow(this.editDoc);
     });
   }
 
@@ -574,7 +671,37 @@ export default class Instance extends Vue {
         message: "设置成功"
       });
       this.getDocByParam();
+      this.clickRow(this.editDoc);
     });
+  }
+
+  private createInstanceGraph(instance: any) {
+    // 创建实例图
+    this.instanceGraphData.nodes = [];
+    this.instanceGraphData.links = [];
+    this.entityAPI.getClassesById(instance.domain).then(({ data }) => {
+      this.instanceGraphData.nodes.push({ role_id: data.id, name: data.label });
+      instance.rangeList.forEach((item: any, index: any) => {
+        this.instanceGraphData.nodes.push({
+          role_id: index,
+          name: item.content
+        });
+        this.entityAPI.getClassesById(item.relation).then(({ data }) => {
+          if (data) {
+            const link = {
+              source: 0,
+              target: index + 1,
+              relation: data.label,
+              color: "734646"
+            };
+            this.instanceGraphData.links.push(link);
+          }
+        });
+      });
+    });
+    setTimeout(() => {
+      new RelationChart(this.$refs.instanceGraph, this.instanceGraphData);
+    }, 1000);
   }
 
   private beforeRouteLeave(to: any, from: any, next: () => void) {
@@ -644,7 +771,12 @@ export default class Instance extends Vue {
     overflow: inherit !important;
   }
 }
-.edit-form {
-  position: fixed;
+</style>
+
+<style lang="less">
+.dialog-wrapper{
+  .el-dialog__headerbtn{
+    transform: scale(3.5);
+  }
 }
 </style>

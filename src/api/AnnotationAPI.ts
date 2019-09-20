@@ -6,11 +6,9 @@ interface AnnotationAPI {
 
     createOrUpdateAnnotation(doc: NLUEntity): Promise<any>;
 
-    getDocById(id: string): Promise<any>;
-
     getDocByParam(
         moduleId: string, status: string, purpose: string,
-        docContent: string, page: number, size: number): Promise<any>;
+        docContent: string, hashCode: number, page: number, size: number): Promise<any>;
 
     createNLUDoc(doc: NLUEntity): Promise<any>;
 

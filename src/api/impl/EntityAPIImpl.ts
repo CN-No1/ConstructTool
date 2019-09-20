@@ -15,7 +15,11 @@ class EntityAPIImpl extends BaseAPI implements EntityAPI {
     }
 
     public async getClass(treeId?: string): Promise<any> {
-        return await this.instance.get("getClasses?id=" + treeId);
+        return await this.instance.get("getClasses?treeId=" + treeId);
+    }
+
+    public async getClassesById(id: string): Promise<any> {
+        return await this.instance.get("getClassesById?id=" + id);
     }
 
     public async getModule(): Promise<any> {
@@ -87,6 +91,10 @@ class EntityAPIImpl extends BaseAPI implements EntityAPI {
 
     public async deleteTreeType(id: string): Promise<any> {
         return await this.instance.delete("deleteTreeType?id=" + id);
+    }
+
+    public async getBandingList(entityId: string): Promise<any> {
+        return await this.instance.get("getBandingList?entityId=" + entityId);
     }
 
 }

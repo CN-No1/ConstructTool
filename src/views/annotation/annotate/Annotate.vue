@@ -17,6 +17,14 @@
             @click="gotoInstance"
           ></el-button>
         </el-tooltip>
+        <el-tooltip class="item" effect="dark" content="刷新本体树" placement="top-start" align="center">
+          <el-button
+            size="mini"
+            circle
+            icon="el-icon-refresh-left"
+            @click="getEntityList(treeId)"
+          ></el-button>
+        </el-tooltip>
       </div>
       <annotator
         ref="annotator"
@@ -237,7 +245,7 @@ export default class Annotate extends Vue {
     });
     this.doc.annotationList = result;
     this.entityArr = this.entityArr.filter(
-      (item: any) => item.id !== row.row.entityId
+      (item: any) => item.id !== row.entityId
     );
     this.doneEdit = true;
   }
@@ -247,6 +255,7 @@ export default class Annotate extends Vue {
     this.annotationAPI.createOrUpdateAnnotation(this.doc).then((res: any) => {
       if (res.code === 0) {
         this.$emit("doneSave");
+        this.doneEdit = false;
         this.$message({
           message: "保存成功！",
           type: "success"

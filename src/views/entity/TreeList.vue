@@ -30,12 +30,12 @@
         <el-table-column prop="name" label="名称">
           <template slot-scope="scope">
             <div @dblclick="showCellInput(scope.$index)">
-              <el-tooltip class="item" effect="dark" content="点击其他地方完成修改" placement="top">
+              <el-tooltip class="item" effect="dark" content="回车完成修改" placement="top">
                 <el-input
                   v-if="editable[scope.$index]"
                   v-model="scope.row.name"
                   style="width:50%;"
-                  @blur="saveTreeNameChange(scope)"
+                  @keyup.enter.native="saveTreeNameChange(scope)"
                 ></el-input>
               </el-tooltip>
               <el-tooltip class="item" effect="dark" content="双击来修改树的名字" placement="top">
@@ -189,14 +189,10 @@ export default class TreeList extends Vue {
   private saveTreeChange(scope: any) {
     // 保存对树的修改
     const temp = scope.row;
-    if (
-      temp.treeType === "1" ||
-      temp.treeType === "2" ||
-      temp.treeType === "3"
-    ) {
+    if (temp.treeType !== "0") {
+      let type = "";
       this.treeList.forEach((item: any) => {
         if (item.id !== temp.id && item.treeType === temp.treeType) {
-          let type;
           switch (temp.treeType) {
             case "1":
               type = "意图";
@@ -216,10 +212,12 @@ export default class TreeList extends Vue {
           )
             .then(() => {
               item.treeType = "0";
-              this.api.createOrUpdateTree(temp).then(({ code }) => {
-                this.$message({
-                  type: "success",
-                  message: "修改成功!"
+              this.api.createOrUpdateTree(item).then((res: any) => {
+                this.api.createOrUpdateTree(temp).then(({ code }) => {
+                  this.$message({
+                    type: "success",
+                    message: "修改成功!"
+                  });
                 });
               });
             })
@@ -229,8 +227,16 @@ export default class TreeList extends Vue {
             });
         }
       });
+      if (type === "") {
+        this.api.createOrUpdateTree(temp).then(({ code }) => {
+          this.$message({
+            type: "success",
+            message: "修改成功!"
+          });
+        });
+      }
     } else {
-      this.api.createOrUpdateTree(scope.row).then(({ code }) => {
+      this.api.createOrUpdateTree(temp).then(({ code }) => {
         this.$message({
           type: "success",
           message: "修改成功!"
@@ -308,7 +314,8 @@ export default class TreeList extends Vue {
       query: {
         treeId: row.id,
         moduleChecked: this.moduleChecked,
-        treeName: row.name
+        treeName: row.name,
+        treeType: row.treeType
       }
     });
   }

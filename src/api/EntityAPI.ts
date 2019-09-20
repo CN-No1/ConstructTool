@@ -6,7 +6,9 @@ import ModuleModel from "./model/ModuleModel";
 import TreeType from "./model/TreeType";
 
 interface EntityAPI {
-    getClass(moduleId: string): Promise<any>;
+    getClass(treeId: string): Promise<any>;
+
+    getClassesById(id: string): Promise<any>;
 
     getModule(): Promise<any>;
 
@@ -41,6 +43,8 @@ interface EntityAPI {
     createTreeType(treeType: TreeType): Promise<any>;
 
     deleteTreeType(id: string): Promise<any>;
+
+    getBandingList(entityId: string): Promise<any>;
 
 }
 

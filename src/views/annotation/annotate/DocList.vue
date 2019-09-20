@@ -44,6 +44,7 @@
           </el-tooltip>
         </div>
         <el-button size="medium" type="primary" @click="openUpload">导入文件</el-button>
+        <el-button size="medium" type="primary" @click="locate">定位</el-button>
         <div style="float: right;">
           当前本体树：
           <el-select
@@ -75,6 +76,7 @@
           stripe
           style="width: 100%"
           v-loading="loading"
+          highlight-current-row
           @row-click="clickRow"
         >
           <el-table-column
@@ -112,7 +114,7 @@
             </template>
           </el-table-column>
         </el-table>
-        <div class="pagenation">
+        <div class="pagenation" :key="mainKey">
           <el-pagination
             @size-change="handleSizeChange"
             @current-change="handleCurrentChange"
@@ -242,6 +244,8 @@ export default class DocList extends Vue {
   private queryDocContent: string = ""; // 模糊查询文档内容
   private purpose: string = ""; // 用途
   private purposeOption: any[] = []; // 用途下拉框
+  private hashCode: number = 0; // 用于精确查询
+  private mainKey: number = 0; // 强制重新渲染组件
 
   private docContent(val: any) {
     if (val.content.length > 20) {
@@ -259,12 +263,20 @@ export default class DocList extends Vue {
   }
 
   private mounted() {
-    if (this.$route.params.docName) {
-      this.queryDocContent = this.$route.params.docName;
+    if (this.$route.params.hashCode) {
+      this.hashCode = this.$route.params.hashCode as any;
     }
     this.getModule();
     this.getDocByParam();
     this.getPurposeOptions();
+  }
+
+  private locate() {
+    // 定位到上次编辑的位置
+    // 获取localStroage值
+    this.hashCode = 0;
+    this.page = Number(localStorage.getItem("NLUPageNum"));
+    this.getDocByParam();
   }
 
   private getModule() {
@@ -284,6 +296,7 @@ export default class DocList extends Vue {
         this.statusCode,
         this.purpose,
         this.queryDocContent,
+        this.hashCode,
         this.page - 1,
         this.size
       )
@@ -292,7 +305,7 @@ export default class DocList extends Vue {
         this.total = data.totalElements;
         this.tableData = data.content;
         this.loading = false;
-        this.editDoc = data.content[0];
+        this.clickRow(data.content[0]);
       });
   }
 
@@ -305,6 +318,9 @@ export default class DocList extends Vue {
   private handleCurrentChange(val: any) {
     // 翻页
     this.page = val;
+    // 设置localStroage值
+    localStorage.setItem("NLUPageNum", this.page.toString());
+    ++this.mainKey;
     this.getDocByParam();
   }
 
@@ -331,7 +347,9 @@ export default class DocList extends Vue {
   private getTrees(moduleId: string) {
     // 获取树下拉框选项
     this.entityAPI.getTree(moduleId).then(({ data }) => {
-      this.treeOptions = data;
+      this.treeOptions = data.filter((item: any) => {
+        return item.treeType === "0";
+      });
     });
   }
 
@@ -371,7 +389,19 @@ export default class DocList extends Vue {
 
   private doneSave() {
     // 组件内保存
-    this.getDocByParam();
+    this.annotationAPI
+      .getDocByParam(
+        this.moduleId,
+        this.statusCode,
+        this.purpose,
+        this.queryDocContent,
+        this.hashCode,
+        this.page - 1,
+        this.size
+      )
+      .then(({ data }) => {
+        this.tableData = data.content;
+      });
   }
 
   // private creatDoc() {
@@ -460,7 +490,7 @@ export default class DocList extends Vue {
     // 跳转创建实例页面
     this.$router.push({
       name: "instance",
-      params: { docName: this.editDoc.content }
+      params: { hashCode: this.editDoc.hashCode }
     });
   }
 
@@ -520,7 +550,7 @@ export default class DocList extends Vue {
     font-size: 28px;
   }
 }
-.edit-form {
-  position: fixed;
-}
+// .edit-form {
+//   position: fixed;
+// }
 </style>

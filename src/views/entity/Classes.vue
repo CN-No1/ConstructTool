@@ -190,6 +190,39 @@
         <el-button type="success" @click="save" style="margin-top: 30px;">保存</el-button>
       </el-col>
     </el-row>
+    <el-dialog
+      title="绑定信息"
+      :visible.sync="bandingTableVisible"
+      width="30%"
+      border
+      stripe
+      :before-close="handleBandingTableClose"
+    >
+      <div>
+        <el-table :data="bandingList" style="width: 100%" v-loading="bandingTableLoading">
+          <el-table-column prop="text" label="绑定文本" align="center"></el-table-column>
+          <el-table-column label="操作" align="center">
+            <template slot-scope="{row}">
+              <el-tooltip
+                class="item"
+                effect="dark"
+                content="跳转到标注处"
+                placement="top-start"
+                align="center"
+              >
+                <el-button
+                  size="mini"
+                  type="warning"
+                  circle
+                  icon="el-icon-s-promotion"
+                  @click="gotoAnnotation(row)"
+                ></el-button>
+              </el-tooltip>
+            </template>
+          </el-table-column>
+        </el-table>
+      </div>
+    </el-dialog>
   </div>
 </template>
 
@@ -204,8 +237,9 @@ import { saveAs } from "file-saver";
 
 @Component({})
 export default class Entity extends Vue {
-  private treeId: string = ""; // 本体书id
+  private treeId: string = ""; // 本体树id
   private treeName: string = ""; // 本体树名字
+  private treeType: string = ""; // 本体树类型
   private formVisible: boolean = false; // 右侧表单是否显示
   private entityClass: EntityClassNode[] = [];
   private node: EntityClassNode = new EntityClassNode(); // 节点临时对象，用于动态修改树节点展示
@@ -220,6 +254,9 @@ export default class Entity extends Vue {
   private unit: any[] = []; // 数字型单位输入框
   private mainKey: number = 0; // 强制刷新组件
   private uploading: boolean = false; // 导入文件loading
+  private bandingList: any[] = []; // 绑定信息
+  private bandingTableVisible: boolean = false; // 绑定信息对话框
+  private bandingTableLoading: boolean = false; // 绑定信息加载
 
   private NumberValidate(row: any, index: any) {
     // 验证数字类型区间输入是否合法
@@ -241,6 +278,7 @@ export default class Entity extends Vue {
     // 初始化
     this.treeId = this.$route.query.treeId as string;
     this.treeName = this.$route.query.treeName as string;
+    this.treeType = this.$route.query.treeType as string;
     this.getTreeData();
     this.getDataType();
   }
@@ -337,6 +375,18 @@ export default class Entity extends Vue {
       .then(() => {
         this.entityAPI.deleteClass(data.id).then((res: any) => {
           if (res.code !== 0) {
+            this.$confirm("该实体已被绑定，请问要查看绑定的数据吗?", "提示", {
+              confirmButtonText: "确定",
+              cancelButtonText: "取消",
+              type: "warning"
+            }).then(() => {
+              this.bandingTableVisible = true;
+              this.bandingTableLoading = true;
+              this.entityAPI.getBandingList(data.id).then(({ data }) => {
+                this.bandingTableLoading = false;
+                this.bandingList = data;
+              });
+            });
             return;
           } else {
             const parent = node.parent;
@@ -357,6 +407,27 @@ export default class Entity extends Vue {
           message: "已取消删除"
         });
       });
+  }
+
+  private handleBandingTableClose() {
+    // 绑定信息对话框关闭
+    this.bandingTableVisible = false;
+    this.bandingList = [];
+  }
+
+  private gotoAnnotation(row: any) {
+    // 跳转到标注处
+    if (this.treeType === "0" || this.treeType === "1") {
+      this.$router.push({
+        name: "docList",
+        params: { hashCode: row.hashCode }
+      });
+    } else {
+      this.$router.push({
+        name: "instance",
+        params: { hashCode: row.hashCode }
+      });
+    }
   }
 
   private showPop() {
