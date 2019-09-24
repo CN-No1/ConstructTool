@@ -36,13 +36,28 @@
           <el-tooltip class="item" effect="dark" content="模糊查询" placement="top-start">
             <el-input
               v-model="queryDocContent"
-              placeholder="输入语料内容后回车"
+              placeholder="输入内容后回车查询"
               clearable
+              :disabled="loading"
               @keyup.enter.native="getDocByParam"
-              @input="getDocByParam"
             ></el-input>
           </el-tooltip>
         </div>
+        <el-tooltip class="item" effect="dark" content="查询类型" placement="top-start">
+          <el-select
+            v-model="queryType"
+            placeholder="请选择查询类型"
+            @change="getDocByParam"
+            :disabled="loading"
+          >
+            <el-option
+              v-for="item in queryTypeOption"
+              :key="item.id"
+              :label="item.name"
+              :value="item.id"
+            ></el-option>
+          </el-select>
+        </el-tooltip>
         <el-button size="medium" type="primary" @click="openUpload">导入文件</el-button>
         <el-button size="medium" type="primary" @click="locate">定位</el-button>
         <div style="float: right;">
@@ -86,6 +101,11 @@
             :formatter="docContent"
             align="center"
           ></el-table-column>
+          <!-- <el-table-column width="500px" label="语料内容" align="center">
+            <template slot-scope="{row}">
+              <div v-html="contentFmt(row)"></div>
+            </template>
+          </el-table-column> -->
           <el-table-column prop="moduleName" label="用途" align="center">
             <template slot-scope="scope">
               <el-tag close-transition>{{scope.row.purpose}}</el-tag>
@@ -221,6 +241,17 @@ export default class DocList extends Vue {
       name: "已标注"
     }
   ];
+  private queryTypeOption: any[] = [
+    {
+      id: "1",
+      name: "语料查询"
+    },
+    {
+      id: "2",
+      name: "实体查询"
+    }
+  ];
+  private queryType: string = "1";
   private moduleId: string = ""; // 领域Id，默认为道路交通
   private statusCode: string = ""; // 状态码
   private page: number = 1; // 当前页
@@ -262,6 +293,25 @@ export default class DocList extends Vue {
     }
   }
 
+  // private contentFmt(row: any) {
+  //   if (this.queryDocContent !== "" && this.queryType === "2") {
+  //     let str: string = row.content;
+  //     let start: string;
+  //     let mid: string;
+  //     let end: string;
+  //     row.annotationList.forEach((item: any) => {
+  //       if (item.value === this.queryDocContent) {
+  //         start = str.slice(0, item.startOffset);
+  //         mid = str.slice(item.startOffset, item.endOffset);
+  //         end = str.slice(item.endOffset, str.length);
+  //       }
+  //     });
+  //     return start + "<i style='color:red;'>" + mid + "</i>" + end;
+  //   } else {
+  //     return row.content;
+  //   }
+  // }
+
   private mounted() {
     if (this.$route.params.hashCode) {
       this.hashCode = this.$route.params.hashCode as any;
@@ -276,6 +326,7 @@ export default class DocList extends Vue {
     // 获取localStroage值
     this.hashCode = 0;
     this.page = Number(localStorage.getItem("NLUPageNum"));
+    ++this.mainKey;
     this.getDocByParam();
   }
 
@@ -296,6 +347,7 @@ export default class DocList extends Vue {
         this.statusCode,
         this.purpose,
         this.queryDocContent,
+        this.queryType,
         this.hashCode,
         this.page - 1,
         this.size
@@ -305,7 +357,12 @@ export default class DocList extends Vue {
         this.total = data.totalElements;
         this.tableData = data.content;
         this.loading = false;
-        this.clickRow(data.content[0]);
+        if (this.isEdit) {
+          this.clickRow(data.content[0]);
+        }
+      })
+      .catch(() => {
+        this.loading = false;
       });
   }
 
@@ -345,7 +402,7 @@ export default class DocList extends Vue {
   }
 
   private getTrees(moduleId: string) {
-    // 获取树下拉框选项
+    // 获取本体树下拉框选项
     this.entityAPI.getTree(moduleId).then(({ data }) => {
       this.treeOptions = data.filter((item: any) => {
         return item.treeType === "0";
@@ -374,15 +431,30 @@ export default class DocList extends Vue {
       })
         .then(() => {
           ref.saveAll();
-          this.getDocByParam();
+          this.annotationAPI
+            .getDocByParam(
+              this.moduleId,
+              this.statusCode,
+              this.purpose,
+              this.queryDocContent,
+              this.queryType,
+              this.hashCode,
+              this.page - 1,
+              this.size
+            )
+            .then(({ data }) => {
+              this.editDoc = row;
+            });
         })
         .catch((action: any) => {
           if (action === "cancel") {
+            this.editDoc = row;
             return;
           }
         });
+    } else {
+      this.editDoc = row;
     }
-    this.editDoc = row;
     this.isEdit = true;
     this.getTrees(row.moduleId);
   }
@@ -395,6 +467,7 @@ export default class DocList extends Vue {
         this.statusCode,
         this.purpose,
         this.queryDocContent,
+        this.queryType,
         this.hashCode,
         this.page - 1,
         this.size

@@ -55,7 +55,7 @@
           draggable
         >
           <span class="custom-tree-node" slot-scope="{ node, data }">
-            <span v-if="!node.flag">{{ node.label }}</span>
+            <span>{{ node.label }}({{ data.useTimes }})</span>
             <!-- <el-input class="tree-input" v-model="node.label" v-if="node.flag"></el-input>
             <el-button size="mini" type="primary" v-if="node.flag" @click="node.flag = false">确认</el-button>-->
             <span>

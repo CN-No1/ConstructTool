@@ -8,7 +8,7 @@ interface AnnotationAPI {
 
     getDocByParam(
         moduleId: string, status: string, purpose: string,
-        docContent: string, hashCode: number, page: number, size: number): Promise<any>;
+        docContent: string, queryType: string, hashCode: number, page: number, size: number): Promise<any>;
 
     createNLUDoc(doc: NLUEntity): Promise<any>;
 
