@@ -10,6 +10,7 @@ import Layout from "./components/layout/Layout.vue";
   components: { Layout }
 })
 export default class AppMain extends Vue {}
+
 </script>
 
 <style>

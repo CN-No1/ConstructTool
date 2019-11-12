@@ -62,7 +62,7 @@
         </el-table-column>
         <el-table-column label="操作">
           <template slot-scope="scope">
-            <el-tooltip
+            <!-- <el-tooltip
               class="item"
               effect="dark"
               content="编辑关系"
@@ -70,7 +70,7 @@
               align="center"
             >
               <i class="iconfont" @click="editRel(scope.row)">&#xe752;</i>
-            </el-tooltip>
+            </el-tooltip> -->
             <el-tooltip
               class="item"
               effect="dark"

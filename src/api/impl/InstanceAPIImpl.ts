@@ -15,10 +15,10 @@ class InstanceAPIImpl extends BaseAPI implements InstanceAPI {
 
     public async getDocByParam(
         moduleId: string, status: string,
-        docContent: string, hashCode: number, page: number, size: number): Promise<any> {
+        docContent: string, queryType: string, hashCode: number, page: number, size: number): Promise<any> {
         return await this.instance.get(
             "getDocByParam?moduleId=" + moduleId + "&status=" + status
-            + "&docContent=" + docContent + "&hashCode=" + hashCode + "&page=" + page + "&size=" + size);
+            + "&docContent=" + docContent + "&queryType=" + queryType + "&hashCode=" + hashCode + "&page=" + page + "&size=" + size);
     }
 
 }

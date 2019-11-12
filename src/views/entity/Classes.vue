@@ -382,9 +382,9 @@ export default class Entity extends Vue {
             }).then(() => {
               this.bandingTableVisible = true;
               this.bandingTableLoading = true;
-              this.entityAPI.getBandingList(data.id).then(({ data }) => {
+              this.entityAPI.getBandingList(data.id).then((res2: any) => {
                 this.bandingTableLoading = false;
-                this.bandingList = data;
+                this.bandingList = res2.data;
               });
             });
             return;
@@ -544,6 +544,21 @@ export default class Entity extends Vue {
   private save() {
     // 保存实体树
     const flatData = NestedToFlat(this.entityClass, this.treeId);
+    let dupLabel: any;
+    let dupFlag = false; // 检查是否有重复的实体
+    flatData.forEach((item: any) => {
+      flatData.forEach((i: any) => {
+        if (i.label === item.label && i.id !== item.id) {
+          dupFlag = true;
+          dupLabel = i;
+        }
+      });
+    });
+    if (dupFlag) {
+      this.$message.error("存在多个实体(" + dupLabel.label + ")请删除后保存！");
+      this.handleClick(dupLabel);
+      return;
+    }
     let flag = false; // 检查是否有填写错误的地方
     flatData.forEach((item: any) => {
       item.propList.forEach((element: any) => {

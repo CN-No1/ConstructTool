@@ -83,7 +83,7 @@
         <el-button type="success" @click="creatDoc">新增</el-button>
       </div>-->
     </div>
-    <el-row type="flex" style="min-height: 768px;">
+    <el-row type="flex" style="min-height: 768px;" class="doc-list">
       <el-col :span="12">
         <el-table
           :data="tableData"
@@ -95,7 +95,6 @@
           @row-click="clickRow"
         >
           <el-table-column
-            width="500px"
             prop="content"
             label="语料内容"
             :formatter="docContent"
@@ -602,15 +601,6 @@ export default class DocList extends Vue {
   text-align: center;
   padding-top: 30px;
 }
-.doc-list {
-  display: flex;
-  .doc-list-left {
-    flex-grow: 1;
-  }
-  .doc-list-right {
-    width: 100%;
-  }
-}
 .edit-area {
   padding: 20px;
   background-color: aliceblue;
@@ -626,4 +616,12 @@ export default class DocList extends Vue {
 // .edit-form {
 //   position: fixed;
 // }
+@media screen and (max-width: 1600px) {
+  .item {
+    width: 120px;
+  }
+  .doc-list{
+    width: 1280px;
+  }
+}
 </style>

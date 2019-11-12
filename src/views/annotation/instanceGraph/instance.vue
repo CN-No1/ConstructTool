@@ -29,14 +29,28 @@
               placeholder="输入语料内容后回车"
               clearable
               @keyup.enter.native="getDocByParam"
-              @input="getDocByParam"
             ></el-input>
           </el-tooltip>
         </div>
+        <el-tooltip class="item" effect="dark" content="查询类型" placement="top-start">
+          <el-select
+            v-model="queryType"
+            placeholder="请选择查询类型"
+            @change="getDocByParam"
+            :disabled="loading"
+          >
+            <el-option
+              v-for="item in queryTypeOption"
+              :key="item.id"
+              :label="item.name"
+              :value="item.id"
+            ></el-option>
+          </el-select>
+        </el-tooltip>
         <el-button size="medium" type="primary" @click="locate">定位</el-button>
       </div>
     </div>
-    <el-row type="flex" style="min-height: 768px;">
+    <el-row type="flex" style="min-height: 768px;" class="doc-list">
       <el-col :span="12">
         <el-table
           :data="tableData"
@@ -97,13 +111,7 @@
           <el-form ref="form" label-width="100px">
             <el-form-item label="语料内容">
               <div style="float:right;">
-                <el-tooltip
-                  class="item"
-                  effect="dark"
-                  content="新建实例"
-                  placement="top-start"
-                  align="center"
-                >
+                <el-tooltip effect="dark" content="新建实例" placement="top-start" align="center">
                   <el-button
                     size="mini"
                     type="primary"
@@ -114,7 +122,6 @@
                 </el-tooltip>
                 <el-tooltip
                   v-if="editDoc.status!='2'"
-                  class="item"
                   effect="dark"
                   content="将此条数据设为无法标注"
                   placement="top-start"
@@ -131,7 +138,6 @@
                 </el-tooltip>
                 <el-tooltip
                   v-if="editDoc.status==='2'"
-                  class="item"
                   effect="dark"
                   content="将此条数据恢复为可标注"
                   placement="top-start"
@@ -145,13 +151,7 @@
                     @click="enableInstance()"
                   ></el-button>
                 </el-tooltip>
-                <el-tooltip
-                  class="item"
-                  effect="dark"
-                  content="跳转到NLU标注"
-                  placement="top-start"
-                  align="center"
-                >
+                <el-tooltip effect="dark" content="跳转到NLU标注" placement="top-start" align="center">
                   <el-button
                     size="mini"
                     type="warning"
@@ -160,13 +160,7 @@
                     @click="gotoNLU"
                   ></el-button>
                 </el-tooltip>
-                <el-tooltip
-                  class="item"
-                  effect="dark"
-                  content="刷新关系树"
-                  placement="top-start"
-                  align="center"
-                >
+                <el-tooltip effect="dark" content="刷新关系树" placement="top-start" align="center">
                   <el-button
                     size="mini"
                     circle
@@ -337,6 +331,17 @@ export default class Instance extends Vue {
       name: "无法标注"
     }
   ];
+  private queryTypeOption: any[] = [
+    {
+      id: "1",
+      name: "语料查询"
+    },
+    {
+      id: "2",
+      name: "实体查询"
+    }
+  ];
+  private queryType: string = "1";
   private moduleId: string = ""; // 领域Id
   private statusCode: string = ""; // 状态码
   private page: number = 1; // 当前页
@@ -400,6 +405,7 @@ export default class Instance extends Vue {
         this.moduleId,
         this.statusCode,
         this.queryDocContent,
+        this.queryType,
         this.hashCode,
         this.page - 1,
         this.size
@@ -605,6 +611,7 @@ export default class Instance extends Vue {
           this.moduleId,
           this.statusCode,
           this.queryDocContent,
+          this.queryType,
           this.hashCode,
           this.page - 1,
           this.size
@@ -686,12 +693,13 @@ export default class Instance extends Vue {
           role_id: index,
           name: item.content
         });
-        this.entityAPI.getClassesById(item.relation).then(({ data }) => {
-          if (data) {
+        this.entityAPI.getClassesById(item.relation).then((res: any) => {
+    debugger
+          if (res.data) {
             const link = {
               source: 0,
               target: index + 1,
-              relation: data.label,
+              relation: res.data.label,
               color: "734646"
             };
             this.instanceGraphData.links.push(link);
@@ -739,15 +747,6 @@ export default class Instance extends Vue {
   text-align: center;
   padding-top: 30px;
 }
-.doc-list {
-  display: flex;
-  .doc-list-left {
-    flex-grow: 1;
-  }
-  .doc-list-right {
-    width: 100%;
-  }
-}
 .edit-area {
   padding: 20px;
   background-color: aliceblue;
@@ -771,12 +770,17 @@ export default class Instance extends Vue {
     overflow: inherit !important;
   }
 }
-</style>
-
-<style lang="less">
-.dialog-wrapper{
-  .el-dialog__headerbtn{
+.dialog-wrapper {
+  .el-dialog__headerbtn {
     transform: scale(3.5);
+  }
+}
+@media screen and (max-width: 1600px) {
+  .item {
+    width: 120px;
+  }
+  .doc-list {
+    width: 1280px;
   }
 }
 </style>

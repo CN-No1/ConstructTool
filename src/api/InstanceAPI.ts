@@ -6,7 +6,7 @@ interface InstanceAPI {
 
     getDocByParam(
         moduleId: string, status: string,
-        docContent: string, hashCode: number, page: number, size: number): Promise<any>;
+        docContent: string, queryType: string, hashCode: number, page: number, size: number): Promise<any>;
 
 }
 

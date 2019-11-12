@@ -22,7 +22,8 @@ class AnnotationAPIImpl extends BaseAPI implements AnnotationAPI {
         docContent: string, queryType: string, hashCode: number, page: number, size: number): Promise<any> {
         return await this.instance.get(
             "getDocByParam?moduleId=" + moduleId + "&status=" + status + "&purpose=" + purpose
-            + "&docContent=" + docContent + "&queryType=" + queryType + "&hashCode=" + hashCode + "&page=" + page + "&size=" + size);
+            + "&docContent=" + docContent + "&queryType=" + queryType + "&hashCode=" + hashCode
+            + "&page=" + page + "&size=" + size);
     }
 
     public async createNLUDoc(doc: NLUEntity): Promise<any> {
